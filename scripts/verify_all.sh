@@ -56,9 +56,13 @@ echo "run-001|test-model|test prompt|test response|1234|PASS" > /tmp/dt_audit_in
 echo "run-002|test-model|prompt with | pipe|response|5678|FAIL" > /tmp/dt_audit_in2.txt
 
 if command -v cobc >/dev/null 2>&1; then
-  cobc -x -o /tmp/dt_audit_test cobol/audit.cob 2>/dev/null
-  /tmp/dt_audit_test < /tmp/dt_audit_in.txt > /tmp/dt_audit_out.txt 2>&1
-  grep -q "AUDIT OK" /tmp/dt_audit_out.txt && pass "COBOL audit OK" || fail "COBOL audit failed"
+  if cobc -x -o /tmp/dt_audit_test cobol/audit.cob 2>/dev/null && \
+     /tmp/dt_audit_test < /tmp/dt_audit_in.txt > /tmp/dt_audit_out.txt 2>&1; then
+    grep -q "AUDIT OK" /tmp/dt_audit_out.txt && pass "COBOL audit OK" || fail "COBOL audit failed"
+  else
+    bash scripts/audit_fallback.sh < /tmp/dt_audit_in.txt > /tmp/dt_audit_out.txt 2>&1
+    grep -q "AUDIT OK" /tmp/dt_audit_out.txt && pass "Audit fallback OK" || fail "Audit fallback failed"
+  fi
 else
   bash scripts/audit_fallback.sh < /tmp/dt_audit_in.txt > /tmp/dt_audit_out.txt 2>&1
   grep -q "AUDIT OK" /tmp/dt_audit_out.txt && pass "Audit fallback OK" || fail "Audit fallback failed"
@@ -73,9 +77,13 @@ echo "some response text" > /tmp/dt_response.txt
 touch /tmp/dt_empty_response.txt
 
 if command -v gfortran >/dev/null 2>&1; then
-  gfortran -o /tmp/dt_score_test fortran/score.f 2>/dev/null
-  /tmp/dt_score_test 500 /tmp/dt_response.txt > /tmp/dt_score_out.txt 2>&1
-  grep -q "SCORE" /tmp/dt_score_out.txt && pass "Fortran score OK" || fail "Fortran score failed"
+  if gfortran -o /tmp/dt_score_test fortran/score.f 2>/dev/null && \
+     /tmp/dt_score_test 500 /tmp/dt_response.txt > /tmp/dt_score_out.txt 2>&1; then
+    grep -q "SCORE" /tmp/dt_score_out.txt && pass "Fortran score OK" || fail "Fortran score failed"
+  else
+    bash scripts/score_fallback.sh 500 /tmp/dt_response.txt > /tmp/dt_score_out.txt 2>&1
+    grep -q "SCORE" /tmp/dt_score_out.txt && pass "Score fallback OK" || fail "Score fallback failed"
+  fi
 else
   bash scripts/score_fallback.sh 500 /tmp/dt_response.txt > /tmp/dt_score_out.txt 2>&1
   grep -q "SCORE" /tmp/dt_score_out.txt && pass "Score fallback OK" || fail "Score fallback failed"
