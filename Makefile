@@ -1,6 +1,7 @@
 .PHONY: all help clean dist test verify unit-test smoke-test hooks install-completion \
         stats check-deps config archive watch clean-all components \
-        validate-requirements validate-config validate-fixtures update-changelog summary \
+        validate-requirements validate-config validate-fixtures validate-scripts validate-commits \
+        update-changelog summary e2e benchmark \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -22,6 +23,13 @@ help:
 	@echo "  dist            — clean + all"
 	@echo "  test verify     — run integration verification"
 	@echo "  unit-test       — run unit tests for each component"
+	@echo "  smoke-test      — quick project health check"
+	@echo "  validate-requirements — check all source files exist"
+	@echo "  validate-config — validate configuration files"
+	@echo "  validate-scripts — syntax-check all shell scripts"
+	@echo "  validate-commits — check commit history quality"
+	@echo "  e2e             — run end-to-end pipeline test"
+	@echo "  benchmark       — benchmark pipeline components"
 	@echo "  hooks           — install git pre-commit hooks"
 	@echo "  install-completion — install bash completion for deepiri-tombstone"
 	@echo "  stats           — show project statistics"
@@ -76,11 +84,23 @@ validate-config:
 validate-fixtures:
 	bash scripts/validate_fixtures.sh
 
+validate-scripts:
+	bash scripts/verify-scripts.sh
+
+validate-commits:
+	bash scripts/verify-commits.sh
+
 update-changelog:
 	bash scripts/update-changelog.sh
 
 summary:
 	bash scripts/summary.sh
+
+e2e:
+	bash scripts/e2e.sh
+
+benchmark:
+	bash scripts/benchmark.sh
 
 components:
 	@echo "Pipeline components:"
