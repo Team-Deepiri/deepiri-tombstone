@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
-            curl jq gcc gforth gnucobol gfortran python3 make ar xz-utils perl
+            curl jq gcc binutils gforth gnucobol gfortran python3 make xz-utils perl
 
       - name: Bootstrap toolchain
         run: bash scripts/bootstrap-toolchain.sh

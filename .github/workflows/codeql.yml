@@ -13,12 +13,8 @@ permissions:
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
+    name: Analyze (cpp)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [cpp, python]
 
     steps:
       - name: Checkout repository
@@ -26,19 +22,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install build deps (cpp)
-        if: matrix.language == 'cpp'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc make ar curl xz-utils
-          bash scripts/bootstrap-toolchain.sh
-          make libdeepiri_tombstone.a
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: cpp
           config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc binutils make curl xz-utils
+          bash scripts/bootstrap-toolchain.sh
+          make libdeepiri_tombstone.a
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
