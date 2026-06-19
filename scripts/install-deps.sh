@@ -51,8 +51,10 @@ case "$OS" in
     ;;
 esac
 
-# ---- ollama ----
-if ! have ollama; then
+# ---- ollama (native install; skip when using Docker via ./setup.sh) ----
+if [[ "${DEEPIRI_SKIP_OLLAMA_INSTALL:-0}" == "1" ]]; then
+  info "skipping native ollama install (DEEPIRI_SKIP_OLLAMA_INSTALL=1)"
+elif ! have ollama; then
   info "installing ollama"
   curl -fsSL https://ollama.com/install.sh | sh
 else

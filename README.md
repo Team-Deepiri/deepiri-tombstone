@@ -7,12 +7,21 @@
 ## Quick start
 
 ```bash
-./scripts/install-deps.sh
-make
-./scripts/pull-model.sh
+./setup.sh
 ./deepiri-tombstone ping
 ./deepiri-tombstone ask llama3.2 "Say hello in one word"
 ./deepiri-tombstone eval llama3.2
+```
+
+`./setup.sh` installs build deps, compiles the project, starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a ping smoke test.
+
+Manual steps (without setup.sh):
+
+```bash
+./scripts/install-deps.sh
+make
+bash scripts/ollama-docker.sh up
+./scripts/pull-model.sh
 ```
 
 ## Commands
