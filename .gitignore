@@ -1,0 +1,11 @@
+bin/
+*.o
+*.a
+*.ll
+*.bc
+reports/*
+!reports/.gitkeep
+.bcplroot/
+vendor/bcpl/
+.DS_Store
+*.deb
