@@ -8,3 +8,4 @@
 - Vintage pipeline: Forth, Fortran, COBOL, AWK, Perl, BCPL fallback
 - Post-training eval fixtures and COBOL audit ledger
 - Makefile and dependency installer
+- chore: history slice 1
