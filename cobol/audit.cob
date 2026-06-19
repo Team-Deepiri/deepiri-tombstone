@@ -2,6 +2,8 @@
        PROGRAM-ID. DEEPIRI-AUDIT.
        AUTHOR. DEEPIRI.
       * Append eval records to reports/audit.ledger (fixed-width format)
+      * Input: pipe-delimited fields on stdin
+      *   RUN_ID|MODEL|PROMPT|RESPONSE|LATENCY_MS|STATUS
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
