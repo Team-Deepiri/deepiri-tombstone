@@ -13,6 +13,6 @@ jobs:
       matrix:
         component: [awk, tokenize, score, audit, build-request]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Test ${{ matrix.component }}
         run: bash tests/test_${{ matrix.component }}.sh
