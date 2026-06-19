@@ -1,4 +1,6 @@
-.PHONY: all help clean dist test verify unit-test hooks install-completion stats check-deps config archive watch clean-all components \
+.PHONY: all help clean dist test verify unit-test smoke-test hooks install-completion \
+        stats check-deps config archive watch clean-all components \
+        validate-requirements validate-config validate-fixtures update-changelog summary \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -61,6 +63,24 @@ watch:
 
 clean-all:
 	bash scripts/clean-all.sh
+
+smoke-test:
+	bash scripts/smoke-test.sh
+
+validate-requirements:
+	bash scripts/validate-requirements.sh
+
+validate-config:
+	bash scripts/validate-config.sh
+
+validate-fixtures:
+	bash scripts/validate_fixtures.sh
+
+update-changelog:
+	bash scripts/update-changelog.sh
+
+summary:
+	bash scripts/summary.sh
 
 components:
 	@echo "Pipeline components:"
