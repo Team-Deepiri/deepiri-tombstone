@@ -34,7 +34,11 @@ Executes queries and uploads results to GitHub Security.
 ### `paths-ignore`
 Excludes vendored toolchains, build outputs, generated LLVM IR, runtime reports, and docs.
 
-## Maintenance examples
+## Prerequisites
+
+GitHub Advanced Security (code scanning) must be enabled for `Team-Deepiri/deepiri-tombstone`
+in **Settings → Code security and analysis → Code scanning**. Without it, the CodeQL
+workflow completes analysis locally but cannot upload results.
 
 ### Add a new language
 Edit matrix in `.github/workflows/codeql.yml`:
