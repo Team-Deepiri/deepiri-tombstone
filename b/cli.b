@@ -40,13 +40,13 @@ cmd_ping() {
 }
 
 cmd_ask(model, prompt) {
-    auto resp, parsed, latency, t0, t1, auditline, runid, status;
+    auto latency, t0, t1, resp, parsed, auditline, runid, status;
 
-    resp = 8192;
-    parsed = 16384;
-    auditline = 24576;
-    runid = 25000;
-    status = 25100;
+    resp = resp_buf();
+    parsed = parsed_buf();
+    auditline = audit_buf();
+    runid = runid_buf();
+    status = status_buf();
 
     t0 = time_ms();
     if (ollama_generate(model, prompt, resp, 8192) == 0) {
@@ -71,16 +71,16 @@ cmd_ask(model, prompt) {
 }
 
 cmd_eval(model, fixture_path) {
-    auto resp, parsed, latency, t0, t1, auditline, runid, prompt, keyword, status;
-    auto pass;
+    auto latency, t0, t1, pass;
+    auto resp, parsed, pr, kw, auditline, runid, status;
 
-    resp = 8192;
-    parsed = 16384;
-    prompt = 20480;
-    keyword = 21248;
-    auditline = 22016;
-    runid = 22528;
-    status = 22656;
+    resp = resp_buf();
+    parsed = parsed_buf();
+    pr = prompt_buf();
+    kw = keyword_buf();
+    auditline = audit_buf();
+    runid = runid_buf();
+    status = status_buf();
 
     system_cmd("mkdir -p reports");
     if (fixture_open(fixture_path) == 0) {
@@ -88,11 +88,11 @@ cmd_eval(model, fixture_path) {
         return(1);
     }
 
-    while (fixture_next(prompt, 256, keyword, 128)) {
-        printf("EVAL %s*n", prompt);
-        run_tokenize(prompt);
+    while (fixture_next(pr, 512, kw, 128)) {
+        printf("EVAL %s*n", pr);
+        run_tokenize(pr);
         t0 = time_ms();
-        if (ollama_generate(model, prompt, resp, 8192) == 0) {
+        if (ollama_generate(model, pr, resp, 8192) == 0) {
             printf("  FAIL generate*n");
             goto next_case;
         }
@@ -107,15 +107,14 @@ cmd_eval(model, fixture_path) {
         pass = 1;
         if (str_len_b(parsed) == 0)
             pass = 0;
-        if (pass & check_keyword(parsed, keyword) == 0)
+        if (pass & check_keyword(parsed, kw) == 0)
             pass = 0;
         if (pass == 0)
             str_copy_b(status, "FAIL", 16);
 
-        write_file("/tmp/dt_parsed.txt", parsed);
         run_score(latency, "/tmp/dt_parsed.txt");
         make_run_id(runid);
-        format_audit(auditline, 512, runid, model, prompt, parsed, latency, status);
+        format_audit(auditline, 512, runid, model, pr, parsed, latency, status);
         write_file("/tmp/dt_audit_in.txt", auditline);
         system_cmd("cat /tmp/dt_audit_in.txt | bin/audit");
         printf("  -> %s [%s]*n", parsed, status);

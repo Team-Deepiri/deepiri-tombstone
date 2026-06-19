@@ -1,14 +1,13 @@
 /* main.b — deepiri-tombstone entry point */
 
 main() {
-    auto model, prompt, fixture, cmd, arg1, arg2;
+    auto cmd, arg1, arg2, model, fixture;
 
-    cmd = 512;
-    arg1 = 1024;
-    arg2 = 2048;
-    model = 4096;
-    prompt = 6144;
-    fixture = 8192;
+    cmd = cmd_buf();
+    arg1 = arg1_buf();
+    arg2 = arg2_buf();
+    model = model_buf();
+    fixture = fixture_buf();
 
     get_cmd(cmd, 64);
     get_arg1(arg1, 256);
