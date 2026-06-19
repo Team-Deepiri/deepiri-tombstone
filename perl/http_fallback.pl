@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 my $host = $ENV{DEEPIRI_TOMBSTONE_HOST} // '127.0.0.1:11434';
+$host =~ s/[^a-zA-Z0-9.:-]//g;
 my ($model, $prompt) = @ARGV;
 die "usage: http_fallback.pl <model> <prompt>\n" unless defined $model && defined $prompt;
 
@@ -16,15 +17,22 @@ sub json_escape {
     return $s;
 }
 
+sub shell_escape {
+    my ($s) = @_;
+    $s =~ s/'/'"'"'/g;
+    return "'$s'";
+}
+
 my $payload = sprintf(
     '{"model":"%s","prompt":"%s","stream":false}',
     json_escape($model),
     json_escape($prompt)
 );
 
-my $cmd = qq{curl -sf "http://$host/api/generate" -d '$payload'};
+my $url = "http://$host/api/generate";
+my $cmd = "curl -sf " . shell_escape($url) . " -d " . shell_escape($payload);
 my $raw = `$cmd`;
-die "curl failed\n" if $? != 0;
+die "curl failed (exit $?)\n" if $? != 0;
 
 if ($raw =~ /"response"\s*:\s*"((?:\\.|[^"\\])*)"/s) {
     my $resp = $1;
@@ -36,4 +44,4 @@ if ($raw =~ /"response"\s*:\s*"((?:\\.|[^"\\])*)"/s) {
     print $resp;
     exit 0;
 }
-die "parse failed\n";
+die "JSON parse failed: no 'response' field found\n";
