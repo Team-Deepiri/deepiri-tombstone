@@ -13,4 +13,4 @@ vendor/
 vendor/llvm/
 .DS_Store
 *.deb
-deepiri-tombstone
+
