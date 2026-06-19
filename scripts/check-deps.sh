@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+eval "$(bash scripts/os-detect.sh)"
+
 missing=0
 check() {
   if command -v "$1" >/dev/null 2>&1; then
@@ -14,11 +16,16 @@ check() {
   fi
 }
 
+echo "=== Platform: $OS/$DISTRO ($ARCH) ==="
+echo ""
+
 echo "=== Required ==="
 check gcc
 check make
-check ar
 check git
+if [[ "$OS" != "macos" ]]; then
+  check ar
+fi
 
 echo "=== Pipeline compilers (optional — fallbacks exist) ==="
 check gforth
