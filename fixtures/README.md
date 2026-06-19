@@ -10,3 +10,4 @@ PROMPT|KEYWORD
 - `KEYWORD` — optional pass check (case-insensitive substring match in response)
 
 Lines starting with `#` are ignored.
+# catalog item 1
