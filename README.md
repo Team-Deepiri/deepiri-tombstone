@@ -49,4 +49,4 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 
 ## License
 
-MIT — Copyright (c) 2026 Deepiri
+Apache License 2.0 — Copyright 2026 Deepiri. See [LICENSE](LICENSE).

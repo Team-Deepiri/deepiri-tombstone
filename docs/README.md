@@ -40,4 +40,4 @@ See [MODULES.md](MODULES.md) and [../src/README.md](../src/README.md).
 
 ### License
 
-MIT — see LICENSE.
+Apache License 2.0 — see [LICENSE](../LICENSE).
