@@ -1,4 +1,4 @@
-.PHONY: all help clean dist test verify hooks stats check-deps config archive watch clean-all components \
+.PHONY: all help clean dist test verify unit-test hooks stats check-deps config archive watch clean-all components \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -19,6 +19,7 @@ help:
 	@echo "  clean           — remove build artifacts"
 	@echo "  dist            — clean + all"
 	@echo "  test verify     — run integration verification"
+	@echo "  unit-test       — run unit tests for each component"
 	@echo "  hooks           — install git pre-commit hooks"
 	@echo "  stats           — show project statistics"
 	@echo "  check-deps      — verify all dependencies"
@@ -95,6 +96,9 @@ deepiri-tombstone: deepiri-tombstone-core scripts/run-b.sh bin/tokenize bin/scor
 
 test verify:
 	bash scripts/verify_all.sh
+
+unit-test:
+	bash tests/run_tests.sh
 
 bin/tokenize: forth/tokenize.fs scripts/tokenize_fallback.sh
 	@mkdir -p bin
