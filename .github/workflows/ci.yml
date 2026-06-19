@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl clang gforth gnucobol gfortran python3 make
+          curl -fsSL -o /tmp/blang.deb \
+            https://github.com/sergev/blang/releases/download/v0.1/blang_0.1-1_amd64.deb
+          sudo dpkg -i /tmp/blang.deb || sudo apt-get install -f -y
+      - name: Build
+        run: make
+      - name: Validate fixtures
+        run: bash scripts/validate_fixtures.sh
