@@ -12,3 +12,4 @@ PROMPT|KEYWORD
 Lines starting with `#` are ignored.
 # catalog item 1
 # catalog item 2
+# catalog item 3
