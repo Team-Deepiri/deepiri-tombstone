@@ -16,3 +16,4 @@ Lines starting with `#` are ignored.
 # catalog item 4
 # catalog item 5
 # catalog item 6
+# catalog item 7
