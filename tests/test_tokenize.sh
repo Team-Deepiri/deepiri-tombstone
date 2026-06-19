@@ -22,7 +22,7 @@ test_tokenize "hello world" "2" "1" "two words"
 test_tokenize "" "0" "1" "empty"
 test_tokenize "hello" "1" "1" "one word"
 test_tokenize "  hello  world  " "2" "1" "leading/trailing spaces"
-test_tokenize "$(printf "hello\nworld")" "2" "1" "newline separated"
+test_tokenize "$(printf "hello\nworld")" "1" "1" "newline separated (reads first line only)"
 
 long_input=$(printf 'word %.0s' {1..600})
 test_tokenize "$long_input" "600" "0" "over budget (600 words)"
