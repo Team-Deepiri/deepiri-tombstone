@@ -5,7 +5,8 @@
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
-        fortran.score cobol.audit forth.tokenize awk.parse bcpl.request perl.http
+        fortran.score cobol.audit forth.tokenize awk.parse bcpl.request perl.http \
+        docker-build docker-run docker-shell man
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -45,6 +46,10 @@ help:
 	@echo "  awk.parse       — build AWK parser"
 	@echo "  perl.http       — build Perl HTTP fallback"
 	@echo "  bcpl.request    — build BCPL request builder"
+	@echo "  docker-build    — build Docker image"
+	@echo "  docker-run      — run in Docker container"
+	@echo "  docker-shell    — start interactive shell in container"
+	@echo "  man             — install man page"
 
 hooks:
 	bash scripts/install-hooks.sh
@@ -207,3 +212,18 @@ clean:
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 
 dist: clean all
+
+docker-build:
+	docker build -t deepiri-tombstone .
+
+docker-run:
+	docker run --rm -e DEEPIRI_TOMBSTONE_HOST -e DEEPIRI_TOMBSTONE_MODEL deepiri-tombstone
+
+docker-shell:
+	docker run --rm -it --entrypoint bash deepiri-tombstone
+
+man:
+	@mkdir -p /usr/local/share/man/man1 2>/dev/null; \
+	 cp man/man1/deepiri-tombstone.1 /usr/local/share/man/man1/ 2>/dev/null && \
+	 echo "installed man page — run: man deepiri-tombstone" || \
+	 echo "install man page manually: cp man/man1/deepiri-tombstone.1 /usr/local/share/man/man1/"
