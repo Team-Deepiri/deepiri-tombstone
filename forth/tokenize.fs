@@ -12,9 +12,13 @@
     REPEAT
   2DROP ;
 
+: trim ( addr -- addr )
+  BEGIN dup c@ bl = WHILE 1+ REPEAT
+  dup ;
+
 : main ( -- )
-  pad 256 accept drop pad word-count
-  ." WORDS " . ."  BUDGET_OK "
+  pad 256 accept drop pad trim word-count
+  ." WORDS " . ." BUDGET_OK "
   dup 512 <= IF 1 ELSE 0 THEN . cr ;
 
 main bye
