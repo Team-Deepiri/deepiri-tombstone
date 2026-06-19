@@ -9,3 +9,4 @@
 - Post-training eval fixtures and COBOL audit ledger
 - Makefile and dependency installer
 - chore: history slice 1
+- chore: history slice 2
