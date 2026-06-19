@@ -1,4 +1,4 @@
-.PHONY: all help clean dist test verify unit-test hooks stats check-deps config archive watch clean-all components \
+.PHONY: all help clean dist test verify unit-test hooks install-completion stats check-deps config archive watch clean-all components \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -21,6 +21,7 @@ help:
 	@echo "  test verify     — run integration verification"
 	@echo "  unit-test       — run unit tests for each component"
 	@echo "  hooks           — install git pre-commit hooks"
+	@echo "  install-completion — install bash completion for deepiri-tombstone"
 	@echo "  stats           — show project statistics"
 	@echo "  check-deps      — verify all dependencies"
 	@echo "  config          — show current configuration"
@@ -37,6 +38,11 @@ help:
 
 hooks:
 	bash scripts/install-hooks.sh
+
+install-completion:
+	@mkdir -p $(HOME)/.local/share/bash-completion/completions
+	cp scripts/completion.sh $(HOME)/.local/share/bash-completion/completions/deepiri-tombstone
+	@echo "completion installed — restart shell or run: source ~/.local/share/bash-completion/completions/deepiri-tombstone"
 
 stats:
 	bash scripts/stats.sh
