@@ -1,0 +1,31 @@
+# Edge case fixtures
+# Each line: PROMPT|KEYWORD
+
+# Empty prompt
+|hello
+# Very long prompt
+Repeat the word hello fifty times in a row without any other text hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello|hello
+# Special characters
+Respond with exactly: back\slash|back\slash
+Respond with exactly: "double quotes"|double quotes
+Respond with exactly: new\nline|new
+# Unicode
+Say the word café|café
+# Numbers only
+12345|12345
+# Case insensitive check
+RESPOND WITH uppercase|uppercase
+# Whitespace only check
+One two three|three
+# Keyword not present in response
+Say the word apple|banana
+# Single character
+a|a
+# Very short prompt
+Hi|Hi
+# Multi-word keyword
+Say hello world|hello world
+# Repeated keyword
+Repeat banana three times|banana
+# No keyword
+This is just a plain prompt with no keyword requirement|
