@@ -13,3 +13,4 @@
 - chore: history slice 3
 - chore: history slice 4
 - chore: history slice 5
+- chore: history slice 6
