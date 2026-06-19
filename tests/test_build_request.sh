@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BUILDER="$ROOT/scripts/build_request_fallback.sh"
+BUILDER="$ROOT/src/request/fallback.sh"
 errors=0
 
 test_request() {

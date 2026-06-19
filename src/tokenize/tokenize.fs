@@ -1,5 +1,5 @@
 \ Tokenize prompt on stdin, report word count and budget status.
-\ deepiri-tombstone forth/tokenize.fs
+\ deepiri-tombstone src/tokenize/tokenize.fs
 
 : skip-blanks ( addr -- addr )
   BEGIN dup c@ bl WHILE 1+ REPEAT ;

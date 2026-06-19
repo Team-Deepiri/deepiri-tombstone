@@ -1,8 +1,8 @@
 # BCPL request builder
 
-File: `bcpl/build_request.b`
+File: `src/request/build_request.b`
 Binary: `bin/build_request`
-Fallback: `scripts/build_request_fallback.sh`
+Fallback: `src/request/fallback.sh`
 
 Builds a JSON request body for Ollama's /api/generate endpoint.
 

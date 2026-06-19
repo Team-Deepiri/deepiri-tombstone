@@ -11,7 +11,7 @@ User input → B orchestrator → Forth (token count check)
 ## Data flow
 
 1. `deepiri-tombstone` CLI parses command (ping/ask/eval)
-2. B orchestrator (`b/main.b`) dispatches to `cmd_ping`, `cmd_ask`, or `cmd_eval`
+2. B orchestrator (`src/orchestrator/main.b`) dispatches to `cmd_ping`, `cmd_ask`, or `cmd_eval`
 3. For `cmd_eval`:
    - Load fixture file → iterate prompt/keyword pairs
    - Tokenize prompt (Forth) → word count + 512-budget check

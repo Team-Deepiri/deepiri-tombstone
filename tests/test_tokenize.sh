@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TOKENIZER="$ROOT/scripts/tokenize_fallback.sh"
+TOKENIZER="$ROOT/src/tokenize/fallback.sh"
 errors=0
 
 test_tokenize() {

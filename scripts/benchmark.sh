@@ -24,7 +24,7 @@ echo "--- Tokenizer ---"
 total_time=0
 for i in $(seq 1 "$ITERATIONS"); do
   start=$EPOCHREALTIME
-  echo "hello world benchmark test $i" | bash scripts/tokenize_fallback.sh > /dev/null
+  echo "hello world benchmark test $i" | bash src/tokenize/fallback.sh > /dev/null
   end=$EPOCHREALTIME
   elapsed=$(echo "$end - $start" | bc 2>/dev/null || echo 0.001)
   total_time=$(echo "$total_time + $elapsed" | bc 2>/dev/null || echo 0)
@@ -36,7 +36,7 @@ echo "--- Request builder ---"
 total_time=0
 for i in $(seq 1 "$ITERATIONS"); do
   start=$EPOCHREALTIME
-  bash scripts/build_request_fallback.sh "$MODEL" "benchmark prompt $i" > /dev/null
+  bash src/request/fallback.sh "$MODEL" "benchmark prompt $i" > /dev/null
   end=$EPOCHREALTIME
   elapsed=$(echo "$end - $start" | bc 2>/dev/null || echo 0.001)
   total_time=$(echo "$total_time + $elapsed" | bc 2>/dev/null || echo 0)
@@ -48,7 +48,7 @@ echo "--- AWK parser ---"
 total_time=0
 for i in $(seq 1 "$ITERATIONS"); do
   start=$EPOCHREALTIME
-  echo '{"response":"benchmark response '"$i"'","done":true}' | awk -f awk/parse_response.awk > /dev/null
+  echo '{"response":"benchmark response '"$i"'","done":true}' | awk -f src/parse/response.awk > /dev/null
   end=$EPOCHREALTIME
   elapsed=$(echo "$end - $start" | bc 2>/dev/null || echo 0.001)
   total_time=$(echo "$total_time + $elapsed" | bc 2>/dev/null || echo 0)

@@ -34,19 +34,11 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
     curl jq gforth perl gawk python3 ca-certificates zstd \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://ollama.com/install.sh | sh
-
 WORKDIR /opt/deepiri-tombstone
 COPY --from=build /src/bin/ bin/
 COPY --from=build /src/scripts/ scripts/
 COPY --from=build /src/fixtures/ fixtures/
-COPY --from=build /src/awk/ awk/
-COPY --from=build /src/perl/ perl/
-COPY --from=build /src/forth/ forth/
-COPY --from=build /src/fortran/ fortran/
-COPY --from=build /src/cobol/ cobol/
-COPY --from=build /src/bcpl/ bcpl/
-COPY --from=build /src/b/ b/
+COPY --from=build /src/src/ src/
 COPY --from=build /src/tests/ tests/
 COPY --from=build /src/docs/ docs/
 COPY --from=build /src/vendor/ vendor/

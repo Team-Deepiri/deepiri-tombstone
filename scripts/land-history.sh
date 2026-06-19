@@ -12,10 +12,10 @@ c() {
 start=$(git rev-list --count HEAD)
 
 MSG='fix: move B string buffers into C bridge to avoid segfaults'
-c c/ollama_bridge.c c/ollama_bridge.h
+c src/bridge/ollama_bridge.c src/bridge/ollama_bridge.h
 
 MSG='fix: use C-backed buffers in B cli and main modules'
-c b/util.b b/cli.b b/main.b
+c src/orchestrator/util.b src/orchestrator/cli.b src/orchestrator/main.b
 
 MSG='fix: resolve wrapper ROOT path for project-local core binary'
 c scripts/run-b.sh deepiri-tombstone
@@ -30,13 +30,13 @@ MSG='feat: add bootstrap-toolchain script for blang/clang without sudo'
 c scripts/bootstrap-toolchain.sh
 
 MSG='feat: add tokenize shell fallback for hosts without gforth'
-c scripts/tokenize_fallback.sh
+c src/tokenize/fallback.sh
 
 MSG='feat: add audit shell fallback for hosts without gnucobol'
-c scripts/audit_fallback.sh
+c src/audit/fallback.sh
 
 MSG='chore: add optional asm symbol stub for bridge exports'
-c c/ollama_bridge_syms.S
+c src/bridge/ollama_bridge_syms.S
 
 MSG='chore: refresh install-bcpl helper'
 c scripts/install-bcpl.sh

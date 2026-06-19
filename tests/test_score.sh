@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SCORER="$ROOT/scripts/score_fallback.sh"
+SCORER="$ROOT/src/score/fallback.sh"
 errors=0
 
 test_score() {

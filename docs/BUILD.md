@@ -47,9 +47,9 @@ make BLANG=/usr/bin/blang LIBB=/usr/lib/libb.a
 
 | Component | Native | Fallback |
 |-----------|--------|----------|
-| Tokenizer | gforth | `scripts/tokenize_fallback.sh` |
-| Scorer | gfortran | `scripts/score_fallback.sh` |
-| Audit | gnucobol | `scripts/audit_fallback.sh` |
-| Request | cintsys | `scripts/build_request_fallback.sh` |
+| Tokenizer | gforth | `src/tokenize/fallback.sh` |
+| Scorer | gfortran | `src/score/fallback.sh` |
+| Audit | gnucobol | `src/audit/fallback.sh` |
+| Request | cintsys | `src/request/fallback.sh` |
 | HTTP | perl | (one implementation) |
 | Parse | awk | (one implementation) |

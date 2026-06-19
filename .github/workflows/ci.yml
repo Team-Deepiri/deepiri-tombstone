@@ -51,10 +51,10 @@ jobs:
         run: bash scripts/validate_fixtures.sh
 
       - name: Perl syntax
-        run: perl -c perl/http_fallback.pl
+        run: perl -c src/transport/http_fallback.pl
 
       - name: AWK lint
-        run: awk --lint -f awk/parse_response.awk /dev/null || true
+        run: awk --lint -f src/parse/response.awk /dev/null || true
 
       - name: Shellcheck scripts
         run: |

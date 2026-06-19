@@ -1,6 +1,6 @@
 # AWK JSON parser
 
-File: `awk/parse_response.awk`
+File: `src/parse/response.awk`
 Binary: `bin/parse`
 
 Reads Ollama /api/generate JSON from stdin and extracts the `"response"`

@@ -1,8 +1,8 @@
 # COBOL audit
 
-File: `cobol/audit.cob`
+File: `src/audit/ledger.cob`
 Binary: `bin/audit`
-Fallback: `scripts/audit_fallback.sh`
+Fallback: `src/audit/fallback.sh`
 
 Reads pipe-delimited fields from stdin and appends a fixed-width record
 to `reports/audit.ledger`.

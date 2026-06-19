@@ -6,7 +6,7 @@ errors=0
 test_audit() {
   local input="$1" expected_status="$2" name="$3"
   rm -f reports/audit.ledger
-  result=$(echo "$input" | bash "$ROOT/scripts/audit_fallback.sh" 2>/dev/null || true)
+  result=$(echo "$input" | bash "$ROOT/src/audit/fallback.sh" 2>/dev/null || true)
   if echo "$result" | grep -q "$expected_status"; then
     echo "  PASS: $name"
   else

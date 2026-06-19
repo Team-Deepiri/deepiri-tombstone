@@ -36,19 +36,19 @@ else
     echo "---"
     echo "PROMPT: $prompt"
     # 1. Tokenize
-    echo "$prompt" | bash scripts/tokenize_fallback.sh
+    echo "$prompt" | bash src/tokenize/fallback.sh
     # 2. Generate (curl to ollama)
-    REQ=$(bash scripts/build_request_fallback.sh "$MODEL" "$prompt")
+    REQ=$(bash src/request/fallback.sh "$MODEL" "$prompt")
     echo "$REQ" > /tmp/dt_e2e_req.json
     RAW=$(curl -sf "http://${DEEPIRI_TOMBSTONE_HOST:-127.0.0.1:11434}/api/generate" \
       -d "$REQ" 2>/dev/null || echo '{"response":"ERROR"}')
     # 3. Parse
-    echo "$RAW" | awk -f awk/parse_response.awk > /tmp/dt_e2e_parsed.txt 2>/dev/null
+    echo "$RAW" | awk -f src/parse/response.awk > /tmp/dt_e2e_parsed.txt 2>/dev/null
     RESPONSE=$(cat /tmp/dt_e2e_parsed.txt)
     # 4. Score
-    bash scripts/score_fallback.sh 500 /tmp/dt_e2e_parsed.txt
+    bash src/score/fallback.sh 500 /tmp/dt_e2e_parsed.txt
     # 5. Audit
-    echo "run-e2e-$$|$MODEL|$prompt|$RESPONSE|500|PASS" | bash scripts/audit_fallback.sh
+    echo "run-e2e-$$|$MODEL|$prompt|$RESPONSE|500|PASS" | bash src/audit/fallback.sh
     echo "RESPONSE: $RESPONSE"
     echo "KEYWORD:  ${keyword:-}"
   done < "$FIXTURE"

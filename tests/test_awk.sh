@@ -6,7 +6,7 @@ errors=0
 
 test_parse() {
   local input="$1" expected="$2" name="$3"
-  result=$(echo "$input" | awk -f "$ROOT/awk/parse_response.awk" 2>/dev/null || true)
+  result=$(echo "$input" | awk -f "$ROOT/src/parse/response.awk" 2>/dev/null || true)
   if [[ "$result" == "$expected" ]]; then
     echo "  PASS: $name"
   else

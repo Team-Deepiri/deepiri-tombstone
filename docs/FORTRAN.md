@@ -1,8 +1,8 @@
 # Fortran scorer
 
-File: `fortran/score.f`
+File: `src/score/score.f`
 Binary: `bin/score`
-Fallback: `scripts/score_fallback.sh`
+Fallback: `src/score/fallback.sh`
 
 Usage: `score <latency_ms> <response_file>`
 

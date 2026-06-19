@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PARSER="$ROOT/awk/parse_response.awk"
+PARSER="$ROOT/src/parse/response.awk"
 errors=0
 
 test_parse() {
@@ -15,7 +15,7 @@ test_parse() {
   fi
 }
 
-echo "=== Parser tests (parse_response.awk) ==="
+echo "=== Parser tests (src/parse/response.awk) ==="
 test_parse '{"response":"ok"}' "ok" "basic"
 test_parse '{"response":"hello world"}' "hello world" "with space"
 test_parse '{"response":"line1\nline2"}' "$(printf "line1\nline2")" "newline"

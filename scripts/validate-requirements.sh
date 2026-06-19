@@ -10,8 +10,8 @@ echo "=== Requirements validation ==="
 # Check all executables exist and are executable
 echo "--- Required scripts ---"
 for script in scripts/install-deps.sh scripts/pull-model.sh scripts/validate_fixtures.sh \
-  scripts/tokenize_fallback.sh scripts/audit_fallback.sh scripts/score_fallback.sh \
-  scripts/build_request_fallback.sh scripts/run-b.sh; do
+  src/tokenize/fallback.sh src/audit/fallback.sh src/score/fallback.sh \
+  src/request/fallback.sh scripts/run-b.sh; do
   if [[ -x "$script" ]]; then
     echo "  OK: $script"
   else
@@ -21,8 +21,8 @@ for script in scripts/install-deps.sh scripts/pull-model.sh scripts/validate_fix
 done
 
 echo "--- Language sources ---"
-for src in awk/parse_response.awk bcpl/build_request.b cobol/audit.cob forth/tokenize.fs \
-  fortran/score.f perl/http_fallback.pl b/main.b b/cli.b b/util.b c/ollama_bridge.c; do
+for src in src/parse/response.awk src/request/build_request.b src/audit/ledger.cob src/tokenize/tokenize.fs \
+  src/score/score.f src/transport/http_fallback.pl src/orchestrator/main.b src/orchestrator/cli.b src/orchestrator/util.b src/bridge/ollama_bridge.c; do
   if [[ -f "$src" ]]; then
     echo "  OK: $src"
   else

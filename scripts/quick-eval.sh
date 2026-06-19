@@ -12,19 +12,19 @@ echo ""
 
 # Tokenize
 echo "--- Tokenize ---"
-echo "$PROMPT" | bash scripts/tokenize_fallback.sh
+echo "$PROMPT" | bash src/tokenize/fallback.sh
 
 # Build request
 echo "--- Request ---"
-bash scripts/build_request_fallback.sh "$MODEL" "$PROMPT"
+bash src/request/fallback.sh "$MODEL" "$PROMPT"
 
 # Generate (requires Ollama)
 if command -v curl >/dev/null 2>&1; then
   echo "--- Generate ---"
-  REQ=$(bash scripts/build_request_fallback.sh "$MODEL" "$PROMPT")
+  REQ=$(bash src/request/fallback.sh "$MODEL" "$PROMPT")
   HOST="${DEEPIRI_TOMBSTONE_HOST:-127.0.0.1:11434}"
   RAW=$(curl -sf "http://$HOST/api/generate" -d "$REQ" 2>/dev/null || echo '{"response":"(curl failed — is Ollama running?)"}')
-  echo "$RAW" | awk -f awk/parse_response.awk
+  echo "$RAW" | awk -f src/parse/response.awk
 fi
 
 echo "--- Done ---"

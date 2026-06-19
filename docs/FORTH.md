@@ -1,8 +1,8 @@
 # Forth tokenizer
 
-File: `forth/tokenize.fs`
+File: `src/tokenize/tokenize.fs`
 Binary: `bin/tokenize`
-Fallback: `scripts/tokenize_fallback.sh`
+Fallback: `src/tokenize/fallback.sh`
 
 Reads a line from stdin, counts whitespace-delimited words, and checks against a 512-word budget.
 

@@ -14,12 +14,12 @@ commit() {
 
 # Batch 1: pending core fixes
 MSG='fix: link B bridge symbols via linker defsym aliases'; commit Makefile
-MSG='fix: export bridge helpers and fixture reader in ollama_bridge.c'; commit c/ollama_bridge.c
-MSG='chore: add optional asm symbol stub file for bridge'; commit c/ollama_bridge_syms.S
+MSG='fix: export bridge helpers and fixture reader in ollama_bridge.c'; commit src/bridge/ollama_bridge.c
+MSG='chore: add optional asm symbol stub file for bridge'; commit src/bridge/ollama_bridge_syms.S
 MSG='chore: ignore generated combined.b and vendored llvm tree'; commit .gitignore
 MSG='feat: add bootstrap-toolchain script for blang and clang without sudo'; commit scripts/bootstrap-toolchain.sh
-MSG='feat: add awk tokenize fallback when gforth unavailable'; commit scripts/tokenize_fallback.sh
-MSG='feat: add shell audit fallback when gnucobol unavailable'; commit scripts/audit_fallback.sh
+MSG='feat: add awk tokenize fallback when gforth unavailable'; commit src/tokenize/fallback.sh
+MSG='feat: add shell audit fallback when gnucobol unavailable'; commit src/audit/fallback.sh
 MSG='fix: normalize run-b wrapper line endings and cd to project root'; commit scripts/run-b.sh
 
 echo "commits now: $(git rev-list --count HEAD)"

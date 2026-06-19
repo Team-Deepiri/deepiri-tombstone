@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-FALLBACK="$ROOT/perl/http_fallback.pl"
+FALLBACK="$ROOT/src/transport/http_fallback.pl"
 errors=0
 
 echo "=== HTTP fallback tests ==="

@@ -21,7 +21,7 @@ Runs scans when PRs target `main` or `dev`, and when commits are pushed to `main
 Uses least-privilege permissions. `security-events: write` is required so CodeQL can upload findings.
 
 ### `strategy.matrix.language`
-Runs one analysis job for the C bridge (`c/ollama_bridge.c`). Shell/Python fallbacks are excluded because they are not primary security surfaces and Python sources are not present as standalone modules.
+Runs one analysis job for the C bridge (`src/bridge/ollama_bridge.c`). Shell/Python fallbacks are excluded because they are not primary security surfaces and Python sources are not present as standalone modules.
 
 ### Initialize CodeQL
 Starts the CodeQL engine and loads `.github/codeql/codeql-config.yml`.

@@ -13,14 +13,14 @@ Each commit should be a single logical change. If you're fixing two bugs, make t
 
 | Language | File | Maintainer |
 |----------|------|------------|
-| B | `b/*.b` | Cursor |
-| C | `c/ollama_bridge.c` | Cursor |
-| BCPL | `bcpl/build_request.b` | opencode |
-| Forth | `forth/tokenize.fs` | opencode |
-| Fortran | `fortran/score.f` | opencode |
-| COBOL | `cobol/audit.cob` | opencode |
-| AWK | `awk/parse_response.awk` | opencode |
-| Perl | `perl/http_fallback.pl` | opencode |
+| B | `src/orchestrator/*.b` | Cursor |
+| C | `src/bridge/ollama_bridge.c` | Cursor |
+| BCPL | `src/request/build_request.b` | opencode |
+| Forth | `src/tokenize/tokenize.fs` | opencode |
+| Fortran | `src/score/score.f` | opencode |
+| COBOL | `src/audit/ledger.cob` | opencode |
+| AWK | `src/parse/response.awk` | opencode |
+| Perl | `src/transport/http_fallback.pl` | opencode |
 
 ## Before submitting
 

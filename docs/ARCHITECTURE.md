@@ -4,24 +4,24 @@
 
 ```mermaid
 flowchart TD
-    CLI[deepiri-tombstone CLI wrapper] --> B[b/main.b orchestrator]
-    B --> Forth[forth/tokenize.fs]
-    B --> CBridge[c/ollama_bridge.c]
-    CBridge --> Ollama[Ollama localhost:11434]
-    Ollama --> AWK[awk/parse_response.awk]
-    AWK --> Fortran[fortran/score.f]
-    Fortran --> COBOL[cobol/audit.cob]
-    COBOL --> Reports[reports/]
+    CLI[deepiri-tombstone CLI] --> Orch[src/orchestrator]
+    Orch --> Tokenize[src/tokenize]
+    Orch --> Bridge[src/bridge]
+    Bridge --> Ollama[Ollama localhost:11434]
+    Ollama --> Parse[src/parse]
+    Parse --> Score[src/score]
+    Score --> Audit[src/audit]
+    Audit --> Reports[reports/]
 ```
 
-## Why B needs a C bridge
+## Why the bridge is separate
 
-[blang libb](https://github.com/sergev/blang) is freestanding — `read`, `write`, `printf` only. HTTP and `system()` live in `libdeepiri_tombstone.a`.
+[blang libb](https://github.com/sergev/blang) is freestanding. HTTP and shared buffers live in `src/bridge/`.
 
 ## Reports
 
-| File | Producer |
-|------|----------|
-| `reports/audit.ledger` | COBOL |
-| `reports/stats.dat` | Fortran |
-| `reports/summary.txt` | Fortran |
+| File | Stage |
+|------|-------|
+| `reports/audit.ledger` | audit |
+| `reports/stats.dat` | score |
+| `reports/summary.txt` | score |

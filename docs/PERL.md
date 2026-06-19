@@ -1,6 +1,6 @@
 # Perl HTTP fallback
 
-File: `perl/http_fallback.pl`
+File: `src/transport/http_fallback.pl`
 Binary: `bin/http_fallback`
 
 Sends a prompt to Ollama via curl, parses the JSON response, and

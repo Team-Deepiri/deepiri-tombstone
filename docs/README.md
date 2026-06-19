@@ -23,18 +23,20 @@ make
 ### Architecture
 
 ```
-b/          orchestrator (B language)
-c/          C bridge library (libdeepiri_tombstone.a)
-cobol/      append-only audit ledger
-fortran/    scoring / running statistics
-awk/        JSON response parser
-perl/       HTTP fallback (curl + JSON parse)
-forth/      prompt tokenizer / budget check
-bcpl/       JSON request builder
-scripts/    dependency install, model pull, validation
-fixtures/   eval prompts with optional keyword pass criteria
-docs/       documentation
+src/orchestrator/   CLI and eval loop
+src/bridge/         Ollama HTTP bridge
+src/tokenize/       prompt word budget
+src/parse/          JSON response extraction
+src/score/          latency and pass-rate stats
+src/audit/          append-only eval ledger
+src/request/        generate API JSON builder
+src/transport/      HTTP fallback client
+scripts/            dependency install, model pull, validation
+fixtures/           eval prompts with optional keyword pass criteria
+docs/               documentation
 ```
+
+See [MODULES.md](MODULES.md) and [../src/README.md](../src/README.md).
 
 ### License
 

@@ -32,6 +32,6 @@ Produces `bin/deepiri-tombstone-core` and wrapper `deepiri-tombstone`.
 
 ## Files not to touch
 
-- `b/` — B orchestrator (Cursor)
-- `c/` — C bridge library (Cursor)
+- `src/orchestrator/` — B orchestrator (Cursor)
+- `src/bridge/` — C bridge library (Cursor)
 - `Makefile` — root build (Cursor)

@@ -22,11 +22,11 @@ done
 
 echo ""
 echo "--- Perl syntax ---"
-perl -c perl/http_fallback.pl > /dev/null || errors=$((errors + 1))
+perl -c src/transport/http_fallback.pl > /dev/null || errors=$((errors + 1))
 
 echo ""
 echo "--- AWK parse test ---"
-echo '{"response":"hello"}' | awk -f awk/parse_response.awk | grep -q "hello" || {
+echo '{"response":"hello"}' | awk -f src/parse/response.awk | grep -q "hello" || {
   echo "  FAIL: AWK parse basic"
   errors=$((errors + 1))
 }

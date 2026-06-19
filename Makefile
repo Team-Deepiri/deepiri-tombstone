@@ -5,8 +5,17 @@
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
-        fortran.score cobol.audit forth.tokenize awk.parse bcpl.request perl.http \
+        stage.tokenize stage.score stage.audit stage.parse stage.request stage.transport \
         docker-build docker-run docker-shell man
+
+SRC_ORCH   := src/orchestrator
+SRC_BRIDGE := src/bridge
+SRC_TOKEN  := src/tokenize
+SRC_PARSE  := src/parse
+SRC_SCORE  := src/score
+SRC_AUDIT  := src/audit
+SRC_REQ    := src/request
+SRC_HTTP   := src/transport
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -25,31 +34,8 @@ help:
 	@echo "  test verify     — run integration verification"
 	@echo "  unit-test       — run unit tests for each component"
 	@echo "  smoke-test      — quick project health check"
-	@echo "  validate-requirements — check all source files exist"
-	@echo "  validate-config — validate configuration files"
-	@echo "  validate-scripts — syntax-check all shell scripts"
-	@echo "  validate-commits — check commit history quality"
-	@echo "  e2e             — run end-to-end pipeline test"
-	@echo "  benchmark       — benchmark pipeline components"
-	@echo "  hooks           — install git pre-commit hooks"
-	@echo "  install-completion — install bash completion for deepiri-tombstone"
-	@echo "  stats           — show project statistics"
-	@echo "  check-deps      — verify all dependencies"
-	@echo "  config          — show current configuration"
-	@echo "  archive         — archive old reports"
-	@echo "  watch           — watch files and auto-rebuild"
-	@echo "  clean-all       — remove all generated data and build artifacts"
-	@echo "  components      — list all pipeline components"
-	@echo "  fortran.score   — build Fortran scorer"
-	@echo "  cobol.audit     — build COBOL audit"
-	@echo "  forth.tokenize  — build Forth tokenizer"
-	@echo "  awk.parse       — build AWK parser"
-	@echo "  perl.http       — build Perl HTTP fallback"
-	@echo "  bcpl.request    — build BCPL request builder"
+	@echo "  components      — list pipeline stages"
 	@echo "  docker-build    — build Docker image"
-	@echo "  docker-run      — run in Docker container"
-	@echo "  docker-shell    — start interactive shell in container"
-	@echo "  man             — install man page"
 
 hooks:
 	bash scripts/install-hooks.sh
@@ -57,7 +43,6 @@ hooks:
 install-completion:
 	@mkdir -p $(HOME)/.local/share/bash-completion/completions
 	cp scripts/completion.sh $(HOME)/.local/share/bash-completion/completions/deepiri-tombstone
-	@echo "completion installed — restart shell or run: source ~/.local/share/bash-completion/completions/deepiri-tombstone"
 
 stats:
 	bash scripts/stats.sh
@@ -108,21 +93,22 @@ benchmark:
 	bash scripts/benchmark.sh
 
 components:
-	@echo "Pipeline components:"
-	@echo "  bin/tokenize       — Forth tokenizer"
-	@echo "  bin/score          — Fortran scorer"
-	@echo "  bin/audit          — COBOL audit"
-	@echo "  bin/parse          — AWK JSON parser"
-	@echo "  bin/build_request  — BCPL request builder"
-	@echo "  bin/http_fallback  — Perl HTTP client"
-	@echo "  bin/deepiri-tombstone-core — B orchestrator"
+	@echo "Pipeline stages (src/):"
+	@echo "  orchestrator/  — B eval loop (ping, ask, eval)"
+	@echo "  bridge/        — Ollama HTTP + buffers"
+	@echo "  tokenize/      — prompt word budget"
+	@echo "  parse/         — Ollama JSON response extract"
+	@echo "  score/         — latency and pass-rate stats"
+	@echo "  audit/         — eval ledger append"
+	@echo "  request/       — generate API JSON builder"
+	@echo "  transport/     — HTTP fallback client"
 
-libdeepiri_tombstone.a: c/ollama_bridge.c c/ollama_bridge.h
-	$(CC) -c -o c/ollama_bridge.o c/ollama_bridge.c
-	ar rcs libdeepiri_tombstone.a c/ollama_bridge.o
+libdeepiri_tombstone.a: $(SRC_BRIDGE)/ollama_bridge.c $(SRC_BRIDGE)/ollama_bridge.h
+	$(CC) -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
+	ar rcs libdeepiri_tombstone.a $(SRC_BRIDGE)/ollama_bridge.o
 
-combined.b: b/util.b b/cli.b b/main.b
-	cat b/util.b b/cli.b b/main.b > combined.b
+combined.b: $(SRC_ORCH)/util.b $(SRC_ORCH)/cli.b $(SRC_ORCH)/main.b
+	cat $(SRC_ORCH)/util.b $(SRC_ORCH)/cli.b $(SRC_ORCH)/main.b > combined.b
 
 vendor/llvm/usr/bin/clang-18:
 	@echo "run scripts/bootstrap-toolchain.sh to extract vendored clang"
@@ -137,9 +123,9 @@ B_DEFSYMS := $(foreach fn,$(B_BRIDGE_FUNCS),-Wl,--defsym=b.$(fn)=$(fn))
 
 deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/clang-18
 	@mkdir -p bin
-	@command -v $(BLANG) >/dev/null || { echo "install blang first: ./scripts/install-deps.sh"; exit 1; }
+	@command -v $(BLANG) >/dev/null || { echo "install blang first: ./setup.sh"; exit 1; }
 	$(BLANG) combined.b --emit-llvm -o combined.ll
-	$(CLANG) combined.ll c/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
+	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
 
 deepiri-tombstone: deepiri-tombstone-core scripts/run-b.sh bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	cp scripts/run-b.sh deepiri-tombstone
@@ -151,63 +137,57 @@ test verify:
 unit-test:
 	bash tests/run_tests.sh
 
-bin/tokenize: forth/tokenize.fs scripts/tokenize_fallback.sh
+bin/tokenize: $(SRC_TOKEN)/tokenize.fs $(SRC_TOKEN)/fallback.sh
 	@mkdir -p bin
 	if command -v gforth >/dev/null 2>&1; then \
-	  printf '#!/usr/bin/env bash\nset -euo pipefail\ncd "$$(dirname "$$0")/.."\ngforth -e "include forth/tokenize.fs"\n' > bin/tokenize; \
+	  printf '#!/usr/bin/env bash\nset -euo pipefail\ncd "$$(dirname "$$0")/.."\ngforth -e "include src/tokenize/tokenize.fs"\n' > bin/tokenize; \
 	else \
-	  cp scripts/tokenize_fallback.sh bin/tokenize; \
+	  cp $(SRC_TOKEN)/fallback.sh bin/tokenize; \
 	fi
 	chmod +x bin/tokenize
 
-bin/score: fortran/score.f scripts/score_fallback.sh
+bin/score: $(SRC_SCORE)/score.f $(SRC_SCORE)/fallback.sh
 	@mkdir -p bin reports
 	if command -v gfortran >/dev/null 2>&1; then \
-	  gfortran -o bin/score fortran/score.f; \
+	  gfortran -o bin/score $(SRC_SCORE)/score.f; \
 	else \
-	  cp scripts/score_fallback.sh bin/score; \
+	  cp $(SRC_SCORE)/fallback.sh bin/score; \
 	fi
 	chmod +x bin/score
 
-bin/audit: cobol/audit.cob scripts/audit_fallback.sh
+bin/audit: $(SRC_AUDIT)/ledger.cob $(SRC_AUDIT)/fallback.sh
 	@mkdir -p bin reports
 	if command -v cobc >/dev/null 2>&1; then \
-	  cobc -x -o bin/audit cobol/audit.cob; \
+	  cobc -x -o bin/audit $(SRC_AUDIT)/ledger.cob; \
 	else \
-	  cp scripts/audit_fallback.sh bin/audit; \
+	  cp $(SRC_AUDIT)/fallback.sh bin/audit; \
 	fi
 	chmod +x bin/audit
 
-bin/parse: awk/parse_response.awk
+bin/parse: $(SRC_PARSE)/response.awk
 	@mkdir -p bin
-	cp awk/parse_response.awk bin/parse
+	cp $(SRC_PARSE)/response.awk bin/parse
 	chmod +x bin/parse
 
-bin/build_request: bcpl/build_request.b scripts/build_request_fallback.sh
+bin/build_request: $(SRC_REQ)/build_request.b $(SRC_REQ)/fallback.sh
 	@mkdir -p bin
-	if command -v cintsys >/dev/null 2>&1; then \
-	  echo "bcpl/build_request.b (BCPL source available — use cintsys manually for native)"; \
-	  cp scripts/build_request_fallback.sh bin/build_request; \
-	else \
-	  cp scripts/build_request_fallback.sh bin/build_request; \
-	fi
+	cp $(SRC_REQ)/fallback.sh bin/build_request
 	chmod +x bin/build_request
 
-bin/http_fallback: perl/http_fallback.pl
+bin/http_fallback: $(SRC_HTTP)/http_fallback.pl
 	@mkdir -p bin
-	cp perl/http_fallback.pl bin/http_fallback
+	cp $(SRC_HTTP)/http_fallback.pl bin/http_fallback
 	chmod +x bin/http_fallback
 
-# Individual component aliases
-fortran.score: bin/score
-cobol.audit: bin/audit
-forth.tokenize: bin/tokenize
-awk.parse: bin/parse
-bcpl.request: bin/build_request
-perl.http: bin/http_fallback
+stage.tokenize: bin/tokenize
+stage.score: bin/score
+stage.audit: bin/audit
+stage.parse: bin/parse
+stage.request: bin/build_request
+stage.transport: bin/http_fallback
 
 clean:
-	rm -f combined.b combined.ll c/ollama_bridge.o libdeepiri_tombstone.a
+	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
 	rm -f bin/deepiri-tombstone-core deepiri-tombstone
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 
@@ -225,5 +205,4 @@ docker-shell:
 man:
 	@mkdir -p /usr/local/share/man/man1 2>/dev/null; \
 	 cp man/man1/deepiri-tombstone.1 /usr/local/share/man/man1/ 2>/dev/null && \
-	 echo "installed man page — run: man deepiri-tombstone" || \
-	 echo "install man page manually: cp man/man1/deepiri-tombstone.1 /usr/local/share/man/man1/"
+	 echo "installed man page" || echo "copy man/man1/deepiri-tombstone.1 manually"

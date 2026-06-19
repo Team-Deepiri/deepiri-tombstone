@@ -12,6 +12,6 @@ echo "==> pre-commit: checking shell syntax"
 bash -n scripts/*.sh
 
 echo "==> pre-commit: checking perl syntax"
-perl -c perl/http_fallback.pl 2>/dev/null
+perl -c src/transport/http_fallback.pl 2>/dev/null
 
 echo "==> pre-commit: OK"

@@ -36,8 +36,8 @@ for f in $required_files; do
 done
 
 echo "--- Pipeline sources ---"
-for f in awk/parse_response.awk bcpl/build_request.b cobol/audit.cob forth/tokenize.fs \
-  fortran/score.f perl/http_fallback.pl; do
+for f in src/parse/response.awk src/request/build_request.b src/audit/ledger.cob src/tokenize/tokenize.fs \
+  src/score/score.f src/transport/http_fallback.pl; do
   if [[ -f "$f" ]]; then
     lines=$(wc -l < "$f")
     echo "  Source OK: $f ($lines lines)"
@@ -48,8 +48,8 @@ for f in awk/parse_response.awk bcpl/build_request.b cobol/audit.cob forth/token
 done
 
 echo "--- Fallback scripts ---"
-for f in scripts/tokenize_fallback.sh scripts/audit_fallback.sh scripts/score_fallback.sh \
-  scripts/build_request_fallback.sh; do
+for f in src/tokenize/fallback.sh src/audit/fallback.sh src/score/fallback.sh \
+  src/request/fallback.sh; do
   if [[ -x "$f" ]]; then
     echo "  Script OK: $f"
   else

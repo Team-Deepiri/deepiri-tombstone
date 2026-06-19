@@ -1,6 +1,6 @@
 # deepiri-tombstone
 
-**Deepiri post-training eval harness** — orchestrated in Ken Thompson's [B language](https://en.wikipedia.org/wiki/B_(programming_language)), with pipeline stages in BCPL, Forth, Fortran, COBOL, AWK, and Perl talking to local [Ollama](https://ollama.com).
+**Deepiri post-training eval harness** — vintage-language pipeline stages orchestrated in Ken Thompson's [B](https://en.wikipedia.org/wiki/B_(programming_language)), talking to local [Ollama](https://ollama.com).
 
 > C's grandparent runs your post-training QA.
 
@@ -15,22 +15,30 @@
 
 `./setup.sh` installs build deps, compiles the project, starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a ping smoke test.
 
-Manual steps (without setup.sh):
+## Source layout
 
-```bash
-./scripts/install-deps.sh
-make
-bash scripts/ollama-docker.sh up
-./scripts/pull-model.sh
-```
+Code lives under `src/` by **pipeline stage** (not by language):
+
+| Stage | Path |
+|-------|------|
+| Orchestrator | `src/orchestrator/` |
+| Ollama bridge | `src/bridge/` |
+| Tokenize | `src/tokenize/` |
+| Parse | `src/parse/` |
+| Score | `src/score/` |
+| Audit | `src/audit/` |
+| Request builder | `src/request/` |
+| HTTP transport | `src/transport/` |
+
+See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` (default `127.0.0.1:11434`) |
-| `ask <model> <prompt>` | Single spot-check after training |
-| `eval [model] [fixture]` | Run fixture suite (default `fixtures/eval_prompts.txt`) |
+| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` |
+| `ask <model> <prompt>` | Single spot-check |
+| `eval [model] [fixture]` | Run fixture suite |
 
 ## Environment
 
@@ -38,21 +46,6 @@ bash scripts/ollama-docker.sh up
 |----------|---------|---------|
 | `DEEPIRI_TOMBSTONE_MODEL` | `llama3.2` | Default model |
 | `DEEPIRI_TOMBSTONE_HOST` | `127.0.0.1:11434` | Ollama host |
-
-Pair with [deepiri-gpu-utils](https://github.com/Team-Deepiri/deepiri-gpu-utils) for hardware-aware model tier picks:
-
-```bash
-deepiri-gpu ollama recommend --json
-```
-
-## Architecture
-
-```
-B orchestrator → Forth (tokenize) → C bridge (Ollama HTTP)
-              → AWK (parse JSON) → Fortran (score) → COBOL (audit ledger)
-```
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/LANGUAGES.md](docs/LANGUAGES.md).
 
 ## License
 
