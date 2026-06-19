@@ -36,8 +36,8 @@ perl -c perl/http_fallback.pl > /dev/null 2>&1 && pass "Perl syntax OK" || fail 
 # ---- 4. Forth tokenize ----
 header "Forth tokenize"
 if command -v gforth >/dev/null 2>&1; then
-  echo "hello world" | gforth -e "include forth/tokenize.fs" > /tmp/dt_test_forth.txt 2>&1
-  grep -q "WORDS 2" /tmp/dt_test_forth.txt && pass "Forth OK (2 words)" || fail "Forth output unexpected"
+  echo "hello world" | gforth -e "include forth/tokenize.fs" > /tmp/dt_test_forth.txt 2>&1 || true
+  grep -q "WORDS 2" /tmp/dt_test_forth.txt && pass "Forth OK (2 words)" || fail "Forth output unexpected: $(cat /tmp/dt_test_forth.txt)"
 else
   echo "hello world" | bash scripts/tokenize_fallback.sh > /tmp/dt_test_forth.txt 2>&1
   grep -q "WORDS" /tmp/dt_test_forth.txt && pass "Forth fallback OK" || fail "Forth fallback failed"
