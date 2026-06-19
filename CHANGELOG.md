@@ -10,3 +10,4 @@
 - Makefile and dependency installer
 - chore: history slice 1
 - chore: history slice 2
+- chore: history slice 3
