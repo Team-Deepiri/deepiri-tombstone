@@ -1,4 +1,4 @@
-.PHONY: all help clean dist test verify hooks stats components \
+.PHONY: all help clean dist test verify hooks stats check-deps config archive watch clean-all components \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -35,6 +35,21 @@ hooks:
 stats:
 	bash scripts/stats.sh
 
+check-deps:
+	bash scripts/check-deps.sh
+
+config:
+	bash scripts/config.sh
+
+archive:
+	bash scripts/archive-reports.sh
+
+watch:
+	bash scripts/watch.sh
+
+clean-all:
+	bash scripts/clean-all.sh
+
 components:
 	@echo "Pipeline components:"
 	@echo "  bin/tokenize       — Forth tokenizer"
@@ -58,7 +73,9 @@ vendor/llvm/usr/bin/clang-18:
 
 B_BRIDGE_FUNCS := get_cmd get_arg1 get_arg2 format_run_id str_len str_copy getenv_str \
 	time_ms read_file write_file ollama_ping ollama_generate ollama_chat run_filter \
-	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_tokenize
+	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_tokenize \
+	resp_buf parsed_buf prompt_buf keyword_buf audit_buf runid_buf status_buf model_buf \
+	fixture_buf cmd_buf arg1_buf arg2_buf
 B_DEFSYMS := $(foreach fn,$(B_BRIDGE_FUNCS),-Wl,--defsym=b.$(fn)=$(fn))
 
 deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/clang-18
