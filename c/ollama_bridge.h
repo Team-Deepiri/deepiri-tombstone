@@ -24,6 +24,18 @@ word_t fixture_next(word_t prompt, word_t plen, word_t keyword, word_t klen);
 word_t fixture_close(void);
 word_t run_score(word_t latency, word_t response_path);
 word_t run_tokenize(word_t prompt);
+word_t resp_buf(void);
+word_t parsed_buf(void);
+word_t prompt_buf(void);
+word_t keyword_buf(void);
+word_t audit_buf(void);
+word_t runid_buf(void);
+word_t status_buf(void);
+word_t model_buf(void);
+word_t fixture_buf(void);
+word_t cmd_buf(void);
+word_t arg1_buf(void);
+word_t arg2_buf(void);
 word_t format_audit(word_t buf, word_t buflen, word_t runid, word_t model,
                     word_t prompt, word_t response, word_t latency, word_t status);
 

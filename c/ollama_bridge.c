@@ -10,11 +10,40 @@
 #include <time.h>
 #include <unistd.h>
 
+#if defined(__linux__)
+/* symbol aliases live in ollama_bridge_syms.S */
+#endif
+
 static char g_host[256] = "127.0.0.1:11434";
 static char g_cmd[64];
 static char g_arg1[256];
 static char g_arg2[2048];
 static FILE *g_fixture = NULL;
+static char g_resp_buf[8192];
+static char g_parsed_buf[4096];
+static char g_prompt_buf[512];
+static char g_keyword_buf[128];
+static char g_audit_buf[512];
+static char g_runid_buf[64];
+static char g_status_buf[16];
+static char g_model_buf[256];
+static char g_fixture_path[256];
+static char g_cmd_buf[64];
+static char g_arg1_buf[256];
+static char g_arg2_buf[512];
+
+word_t resp_buf(void) { return (word_t)g_resp_buf; }
+word_t parsed_buf(void) { return (word_t)g_parsed_buf; }
+word_t prompt_buf(void) { return (word_t)g_prompt_buf; }
+word_t keyword_buf(void) { return (word_t)g_keyword_buf; }
+word_t audit_buf(void) { return (word_t)g_audit_buf; }
+word_t runid_buf(void) { return (word_t)g_runid_buf; }
+word_t status_buf(void) { return (word_t)g_status_buf; }
+word_t model_buf(void) { return (word_t)g_model_buf; }
+word_t fixture_buf(void) { return (word_t)g_fixture_path; }
+word_t cmd_buf(void) { return (word_t)g_cmd_buf; }
+word_t arg1_buf(void) { return (word_t)g_arg1_buf; }
+word_t arg2_buf(void) { return (word_t)g_arg2_buf; }
 
 void tombstone_set_args(int argc, char **argv) {
     g_cmd[0] = g_arg1[0] = g_arg2[0] = '\0';
@@ -334,3 +363,4 @@ word_t run_tokenize(word_t prompt) {
     snprintf(cmd, sizeof(cmd), "printf '%%s\\n' %s | bin/tokenize", esc);
     return system(cmd) == 0 ? 1 : 0;
 }
+
