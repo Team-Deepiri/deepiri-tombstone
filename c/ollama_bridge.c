@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 static char g_host[256] = "127.0.0.1:11434";
 static char g_cmd[64];
