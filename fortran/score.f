@@ -1,5 +1,6 @@
-C     deepiri-tombstone fortran/score.f
+C     deepiri-tombstone Fortran scorer
 C     Usage: score <latency_ms> <response_file>
+C     Appends a record to reports/stats.dat and writes reports/summary.txt
       PROGRAM SCORE
       IMPLICIT NONE
       CHARACTER*512 ARG1, ARG2, LINE
@@ -7,9 +8,18 @@ C     Usage: score <latency_ms> <response_file>
       REAL MEAN_LAT, MEAN_LEN, PASS_RATE
       INTEGER N
 
+      IF (IARGC() .LT. 2) THEN
+        PRINT *, 'usage: score <latency_ms> <response_file>'
+        CALL EXIT(1)
+      END IF
+
       CALL GETARG(1, ARG1)
       CALL GETARG(2, ARG2)
-      READ(ARG1, *) LATENCY
+      READ(ARG1, *, IOSTAT=IOS) LATENCY
+      IF (IOS .NE. 0) THEN
+        PRINT *, 'ERROR: invalid latency value: ', TRIM(ARG1)
+        CALL EXIT(1)
+      END IF
 
       LENGTH = 0
       PASS = 0
@@ -21,10 +31,16 @@ C     Usage: score <latency_ms> <response_file>
           IF (LENGTH .GT. 0) PASS = 1
         END IF
         CLOSE(11)
+      ELSE
+        PRINT *, 'WARNING: response file not found: ', TRIM(ARG2)
       END IF
 
       OPEN(UNIT=12, FILE='reports/stats.dat', STATUS='UNKNOWN',
-     &     POSITION='APPEND')
+     &     POSITION='APPEND', IOSTAT=IOS)
+      IF (IOS .NE. 0) THEN
+        PRINT *, 'ERROR: cannot open reports/stats.dat'
+        CALL EXIT(1)
+      END IF
       WRITE(12, '(I10,1X,I10,1X,I2)') LATENCY, LENGTH, PASS
       CLOSE(12)
 
@@ -38,13 +54,13 @@ C     Usage: score <latency_ms> <response_file>
       OPEN(UNIT=13, FILE='reports/stats.dat', STATUS='OLD',
      &     IOSTAT=IOS)
       IF (IOS .EQ. 0) THEN
- 10     READ(13, *, END=20) LATENCY, LENGTH, PASS
+   10   READ(13, *, END=20) LATENCY, LENGTH, PASS
         N = N + 1
         MEAN_LAT = MEAN_LAT + REAL(LATENCY)
         MEAN_LEN = MEAN_LEN + REAL(LENGTH)
         PASS_RATE = PASS_RATE + REAL(PASS)
         GO TO 10
- 20     CLOSE(13)
+   20   CLOSE(13)
         IF (N .GT. 0) THEN
           MEAN_LAT = MEAN_LAT / REAL(N)
           MEAN_LEN = MEAN_LEN / REAL(N)
@@ -52,7 +68,12 @@ C     Usage: score <latency_ms> <response_file>
         END IF
       END IF
 
-      OPEN(UNIT=14, FILE='reports/summary.txt', STATUS='REPLACE')
+      OPEN(UNIT=14, FILE='reports/summary.txt', STATUS='REPLACE',
+     &     IOSTAT=IOS)
+      IF (IOS .NE. 0) THEN
+        PRINT *, 'ERROR: cannot write reports/summary.txt'
+        CALL EXIT(1)
+      END IF
       WRITE(14, '(A,I0)') 'RUNS ', N
       WRITE(14, '(A,F12.2)') 'MEAN_LATENCY_MS ', MEAN_LAT
       WRITE(14, '(A,F12.2)') 'MEAN_LENGTH ', MEAN_LEN
