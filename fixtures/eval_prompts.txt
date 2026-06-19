@@ -1,0 +1,16 @@
+PROMPT|KEYWORD
+What is 2+2?|4
+Respond with only the word YES|YES
+Return JSON with key ok set to true|ok
+What company built deepiri-tombstone?|Deepiri
+Name one programming language older than C|Fortran
+Say hello in exactly one word|hello
+What is the capital of France?|Paris
+Complete: To be or not to |be
+Respond with the number 42 only|42
+Write a haiku about vintage code|
+List three extinct languages separated by commas|ALGOL,BCPL,PL/I
+What does Ollama run locally?|model
+Is post-training evaluation important?|yes
+Respond with valid JSON containing status pass|pass
+One word describing B language|ancestor
