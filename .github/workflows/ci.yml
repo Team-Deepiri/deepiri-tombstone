@@ -1,41 +1,51 @@
-name: ci
+name: CI - deepiri-tombstone
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  ci:
+    name: Build and verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install system deps
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq curl jq gcc gforth gnucobol gfortran python3 make ar xz-utils
+          sudo apt-get install -y -qq \
+            curl jq gcc gforth gnucobol gfortran python3 make ar xz-utils perl
 
-      - name: Vendor blang
-        run: bash scripts/install-deps.sh
+      - name: Bootstrap toolchain
+        run: bash scripts/bootstrap-toolchain.sh
 
       - name: Build
         run: make
 
-      - name: Integration test
+      - name: Integration verify
         run: bash scripts/verify_all.sh
 
+      - name: Component tests
+        run: |
+          bash tests/test_parse.sh
+          bash tests/test_tokenize.sh
+          bash tests/test_score.sh
+          bash tests/test_audit.sh
+          bash tests/test_build_request.sh
+
   lint:
+    name: Lint and validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Shellcheck
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck
-          shellcheck scripts/*.sh || true
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Validate fixtures
         run: bash scripts/validate_fixtures.sh
@@ -43,5 +53,11 @@ jobs:
       - name: Perl syntax
         run: perl -c perl/http_fallback.pl
 
-      - name: AWK syntax
+      - name: AWK lint
         run: awk --lint -f awk/parse_response.awk /dev/null || true
+
+      - name: Shellcheck scripts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          shellcheck scripts/*.sh || true

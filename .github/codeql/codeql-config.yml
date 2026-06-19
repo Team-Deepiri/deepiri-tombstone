@@ -1,0 +1,22 @@
+name: deepiri-tombstone-codeql-config
+
+# Let CodeQL scan checked-out repository files while excluding noisy artifacts.
+
+paths-ignore:
+  - '**/vendor/**'
+  - '**/bin/**'
+  - '**/reports/**'
+  - '**/*.ll'
+  - '**/combined.b'
+  - '**/docs/**'
+  - '**/.venv/**'
+  - '**/venv/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/logs/**'
+  - '**/tmp/**'
+  - '**/temp/**'
+  - '**/.cache/**'
+  - '**/__pycache__/**'
+  - '**/.pytest_cache/**'
+  - '**/*.deb'
