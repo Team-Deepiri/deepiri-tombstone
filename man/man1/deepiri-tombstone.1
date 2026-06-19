@@ -1,0 +1,87 @@
+.TH DEEPIRI\-TOMBSTONE 1 2026\-06\-19 "deepiri\-tombstone 1.0.0" "User Commands"
+.SH NAME
+deepiri\-tombstone \- multi\-language post\-training evaluation harness for Ollama
+.SH SYNOPSIS
+.B deepiri\-tombstone
+[\fI\,OPTIONS\/\fR]
+.SH DESCRIPTION
+.B deepiri\-tombstone
+is an end\-to-end evaluation harness for Ollama models. The pipeline
+tokenizes prompts (Forth), builds HTTP requests (BCPL), invokes the
+Ollama API (C), parses JSON responses (AWK), scores results (Fortran),
+and maintains an audit ledger (COBOL). Each stage has a native compiler
+path and a POSIX fallback script.
+.SH OPTIONS
+.TP
+.B \-\-help
+Display usage information and exit.
+.TP
+.B \-\-version
+Print version and exit.
+.TP
+.B \-\-host \fI\,ADDR\/\fR
+Ollama server address (default: 127.0.0.1:11434).
+Overrides \fB\(scDEEPIRI_TOMBSTONE_HOST\fR.
+.TP
+.B \-\-model \fI\,NAME\/\fR
+Model name (default: llama3.2).
+Overrides \fB\(scDEEPIRI_TOMBSTONE_MODEL\fR.
+.TP
+.B \-\-fixture \fI\,FILE\/\fR
+Path to fixture file with prompts.
+Default: fixtures/eval_prompts.txt.
+.TP
+.B \-\-output \fI\,FILE\/\fR
+Write audit output to FILE.
+Default: stdout.
+.SH ENVIRONMENT
+.TP
+.B DEEPIRI_TOMBSTONE_HOST
+Ollama server address (default: 127.0.0.1:11434).
+.TP
+.B DEEPIRI_TOMBSTONE_MODEL
+Default model name (default: llama3.2).
+.TP
+.B DEEPIRI_TOMBSTONE_FIXTURE
+Default fixture file path.
+.TP
+.B DEEPIRI_TOMBSTONE_OUTPUT
+Set to \fBjson\fR for JSON output from fallback scripts.
+.SH FILES
+.TP
+.B fixtures/eval_prompts.txt
+Standard evaluation prompts with keyword pass criteria.
+.TP
+.B fixtures/benchmark_prompts.txt
+Longer prompts for throughput benchmarking.
+.TP
+.B fixtures/edge_cases.txt
+Edge cases: empty prompts, special characters, unicode.
+.TP
+.B fixtures/stress_prompts.txt
+Stress test prompts for high\-volume evaluation.
+.TP
+.B reports/
+Output directory for audit logs and evaluation reports.
+.SH EXIT STATUS
+.TP
+0
+All evaluations passed.
+.TP
+1
+One or more evaluations failed.
+.TP
+2
+Configuration or dependency error.
+.SH BUGS
+Report issues at \fIhttps://github.com/Team\-Deepiri/deepiri\-tombstone/issues\fR.
+.SH AUTHOR
+Team Deepiri
+.SH SEE ALSO
+.BR ollama (1),
+.BR gforth (1),
+.BR gfortran (1),
+.BR cobc (1),
+.BR awk (1),
+.BR perl (1),
+.BR bcpl (1)
