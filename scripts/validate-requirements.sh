@@ -29,7 +29,7 @@ for src in awk/parse_response.awk bcpl/build_request.b cobol/audit.cob forth/tok
     echo "  MISSING: $src"
     errors=$((errors + 1))
   fi
-fi
+done
 
 echo "--- Documentation ---"
 for doc in README.md CHANGELOG.md LICENSE docs/README.md docs/ARCHITECTURE.md \
@@ -40,7 +40,7 @@ for doc in README.md CHANGELOG.md LICENSE docs/README.md docs/ARCHITECTURE.md \
     echo "  MISSING: $doc"
     errors=$((errors + 1))
   fi
-fi
+done
 
 echo ""
 if [[ "$errors" -eq 0 ]]; then
