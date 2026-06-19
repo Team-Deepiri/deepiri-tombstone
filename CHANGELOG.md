@@ -32,3 +32,4 @@
 - chore: history slice 22
 - chore: history slice 23
 - chore: history slice 24
+- chore: history slice 25
