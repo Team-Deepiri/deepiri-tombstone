@@ -1,0 +1,14 @@
+bin/
+*.o
+*.a
+combined.b
+combined.ll
+*.bc
+reports/
+.bcplroot/
+vendor/
+.DS_Store
+*.deb
+.git/
+__pycache__/
+*.pyc
