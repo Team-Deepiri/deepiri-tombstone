@@ -2,12 +2,14 @@
 
 main() {
     auto cmd, arg1, arg2, model, fixture;
+    auto buf;
 
     cmd = cmd_buf();
     arg1 = arg1_buf();
     arg2 = arg2_buf();
     model = model_buf();
     fixture = fixture_buf();
+    buf = resp_buf();
 
     get_cmd(cmd, 64);
     get_arg1(arg1, 256);
@@ -35,15 +37,22 @@ main() {
     }
 
     if (str_eq(cmd, "models")) {
-        return(cmd_models());
+        if (ollama_models(buf, 4096) == 0) {
+            printf("Ollama not reachable*n");
+            return(1);
+        }
+        printf("%s*n", buf);
+        return(0);
     }
 
     if (str_eq(cmd, "compare")) {
-        return(cmd_compare());
+        system_cmd("bash scripts/compare.sh reports/audit.ledger reports/audit.ledger text");
+        return(0);
     }
 
     if (str_eq(cmd, "trend")) {
-        return(cmd_trend());
+        system_cmd("bash scripts/trend.sh reports/trend.dat reports/summary.txt");
+        return(0);
     }
 
     printf("deepiri-tombstone — Deepiri post-training eval*n");
