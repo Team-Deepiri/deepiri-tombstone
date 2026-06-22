@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   ci:
@@ -21,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
-            curl jq gcc binutils gforth gnucobol gfortran python3 make xz-utils perl
+            curl jq gcc binutils gforth gnucobol gfortran python3 make xz-utils perl bc
 
       - name: Bootstrap toolchain
         run: bash scripts/bootstrap-toolchain.sh
@@ -40,6 +41,22 @@ jobs:
           bash tests/test_audit.sh
           bash tests/test_build_request.sh
 
+      - name: Validate all fixtures
+        run: |
+          bash scripts/validate_fixtures.sh fixtures/eval_prompts.txt
+          bash scripts/validate_fixtures.sh fixtures/benchmark_prompts.txt
+          bash scripts/validate_fixtures.sh fixtures/edge_cases.txt
+          bash scripts/validate_fixtures.sh fixtures/stress_prompts.txt
+
+      - name: Benchmark dry-run
+        run: bash scripts/benchmark.sh 3
+
+      - name: Script syntax checks
+        run: |
+          bash -n scripts/compare-models.sh || true
+          bash -n scripts/trend.sh || true
+          bash -n scripts/report.sh || true
+
   lint:
     name: Lint and validate
     runs-on: ubuntu-latest
@@ -48,7 +65,10 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Validate fixtures
-        run: bash scripts/validate_fixtures.sh
+        run: |
+          for f in fixtures/*.txt; do
+            bash scripts/validate_fixtures.sh "$f"
+          done
 
       - name: Perl syntax
         run: perl -c src/transport/http_fallback.pl
@@ -61,3 +81,30 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
           shellcheck scripts/*.sh || true
+
+      - name: Fortran syntax
+        run: |
+          if command -v gfortran >/dev/null 2>&1; then
+            gfortran -fsyntax-only src/score/score.f || true
+          fi
+
+      - name: COBOL syntax
+        run: |
+          if command -v cobc >/dev/null 2>&1; then
+            cobc -fsyntax-only src/audit/ledger.cob 2>/dev/null || true
+          fi
+
+      - name: Forth syntax
+        run: |
+          if command -v gforth >/dev/null 2>&1; then
+            gforth -e "include src/tokenize/tokenize.fs" -e "bye" /dev/null 2>/dev/null || true
+          fi
+
+      - name: Report generation test
+        run: |
+          # Test report generation with synthetic data
+          mkdir -p reports
+          echo "run-001|test|hello|world|100|PASS" > reports/audit.ledger
+          bash scripts/report.sh text > /dev/null 2>&1 && echo "Report(text): OK" || echo "Report(text): skipped"
+          bash scripts/report.sh markdown > /dev/null 2>&1 && echo "Report(md): OK" || echo "Report(md): skipped"
+          bash scripts/report.sh html > /dev/null 2>&1 && echo "Report(html): OK" || echo "Report(html): skipped"

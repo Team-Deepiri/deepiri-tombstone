@@ -2,12 +2,14 @@
 
 main() {
     auto cmd, arg1, arg2, model, fixture;
+    auto buf;
 
     cmd = cmd_buf();
     arg1 = arg1_buf();
     arg2 = arg2_buf();
     model = model_buf();
     fixture = fixture_buf();
+    buf = resp_buf();
 
     get_cmd(cmd, 64);
     get_arg1(arg1, 256);
@@ -34,10 +36,32 @@ main() {
         return(cmd_eval(model, fixture));
     }
 
+    if (str_eq(cmd, "models")) {
+        if (ollama_models(buf, 4096) == 0) {
+            printf("Ollama not reachable*n");
+            return(1);
+        }
+        printf("%s*n", buf);
+        return(0);
+    }
+
+    if (str_eq(cmd, "compare")) {
+        system_cmd("bash scripts/compare.sh reports/audit.ledger reports/audit.ledger text");
+        return(0);
+    }
+
+    if (str_eq(cmd, "trend")) {
+        system_cmd("bash scripts/trend.sh reports/trend.dat reports/summary.txt");
+        return(0);
+    }
+
     printf("deepiri-tombstone — Deepiri post-training eval*n");
     printf("usage:*n");
-    printf("  deepiri-tombstone ping*n");
-    printf("  deepiri-tombstone ask <model> <prompt>*n");
-    printf("  deepiri-tombstone eval [model] [fixture]*n");
+    printf("  deepiri-tombstone ping              check Ollama connectivity*n");
+    printf("  deepiri-tombstone ask <m> <p>       single prompt eval*n");
+    printf("  deepiri-tombstone eval [m] [f]      batch eval from fixture*n");
+    printf("  deepiri-tombstone models            list available models*n");
+    printf("  deepiri-tombstone compare           compare last two eval runs*n");
+    printf("  deepiri-tombstone trend             show eval trend summary*n");
     return(1);
 }

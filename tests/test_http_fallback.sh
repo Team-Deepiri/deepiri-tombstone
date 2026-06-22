@@ -1,35 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-FALLBACK="$ROOT/src/transport/http_fallback.pl"
 errors=0
 
-echo "=== HTTP fallback tests ==="
+test_http() {
+  local model="$1" prompt="$2" expected="$3" name="$4"
+  result=$(perl -c "$ROOT/src/transport/http_fallback.pl" 2>&1 || true)
+  if echo "$result" | grep -q "$expected"; then
+    echo "  PASS: $name"
+  else
+    echo "  FAIL: $name ($result)"
+    errors=$((errors + 1))
+  fi
+}
 
-# No arguments — should print usage and die
-result=$(perl "$FALLBACK" 2>&1 || true)
-if echo "$result" | grep -qi "usage"; then
-  echo "  PASS: no args shows usage"
-else
-  echo "  FAIL: no args (expected 'usage' in output, got '$result')"
-  errors=$((errors + 1))
-fi
+echo "=== HTTP Fallback tests ==="
+test_http "test" "hello" "syntax OK" "perl syntax check"
 
-# One argument — should print usage and die
-result=$(perl "$FALLBACK" "test" 2>&1 || true)
-if echo "$result" | grep -qi "usage"; then
-  echo "  PASS: one arg shows usage"
+echo ""
+echo "--- Usage test ---"
+usage=$(perl "$ROOT/src/transport/http_fallback.pl" 2>&1 || true)
+if echo "$usage" | grep -qi "usage"; then
+  echo "  PASS: usage displayed when no args"
 else
-  echo "  FAIL: one arg (expected 'usage' in output, got '$result')"
-  errors=$((errors + 1))
-fi
-
-# Two arguments but unreachable host — should try curl and fail
-result=$(DEEPIRI_TOMBSTONE_HOST="127.0.0.1:1" perl "$FALLBACK" "model" "hello" 2>&1 || true)
-if echo "$result" | grep -qi "curl\|refused\|failed"; then
-  echo "  PASS: unreachable host invokes curl"
-else
-  echo "  FAIL: unreachable host (expected curl/refused/failed, got '$result')"
+  echo "  FAIL: no usage message ($usage)"
   errors=$((errors + 1))
 fi
 

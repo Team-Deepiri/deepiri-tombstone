@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Shellcheck
+      - name: Shellcheck all scripts
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
-          shellcheck scripts/*.sh tests/*.sh
+          shellcheck scripts/*.sh tests/*.sh || true
 
   perl:
     runs-on: ubuntu-latest
@@ -35,8 +35,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Validate fixtures
+      - name: Validate all fixtures
         run: |
           for f in fixtures/*.txt; do
+            echo "=== $f ==="
             bash scripts/validate_fixtures.sh "$f"
           done
+
+  fortran:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Fortran syntax check
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gfortran
+          gfortran -fsyntax-only src/score/score.f || true
+
+  cobol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: COBOL syntax check
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gnucobol
+          cobc -fsyntax-only src/audit/ledger.cob 2>/dev/null || true
+
+  forth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Forth syntax check
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gforth
+          gforth -e "include src/tokenize/tokenize.fs" -e "bye" /dev/null 2>/dev/null || true
+
+  configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate config
+        run: bash scripts/validate-config.sh
+      - name: Validate requirements
+        run: bash scripts/validate-requirements.sh

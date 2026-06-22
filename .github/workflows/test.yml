@@ -10,9 +10,51 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        component: [awk, tokenize, score, audit, build-request]
+        component: [awk, tokenize, score, audit, build_request, http_fallback]
     steps:
       - uses: actions/checkout@v7
+      - name: Install deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bc curl jq
       - name: Test ${{ matrix.component }}
         run: bash tests/test_${{ matrix.component }}.sh
+
+  fixture-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate all fixture files
+        run: |
+          for f in fixtures/*.txt; do
+            echo "=== $f ==="
+            bash scripts/validate_fixtures.sh "$f"
+          done
+
+  report-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test report generation
+        run: |
+          mkdir -p reports
+          echo "run-001|test-model|test-prompt|test-response|100|PASS" > reports/audit.ledger
+          echo "run-002|test-model|test-prompt-2|test-response-2|200|FAIL" >> reports/audit.ledger
+          bash scripts/report.sh text reports/audit.ledger > /dev/null 2>&1 && echo "text: OK" || echo "text: FAIL"
+          bash scripts/report.sh markdown reports/audit.ledger > /dev/null 2>&1 && echo "md: OK" || echo "md: FAIL"
+          bash scripts/report.sh html reports/audit.ledger > /dev/null 2>&1 && echo "html: OK" || echo "html: FAIL"
+
+  export-formats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test export formats
+        run: |
+          mkdir -p reports
+          echo "run-001|test|prompt|response|100|PASS" > reports/audit.ledger
+          bash scripts/export.sh reports/audit.ledger json > /dev/null 2>&1 && echo "json: OK" || echo "json: FAIL"
+          bash scripts/export.sh reports/audit.ledger jsonl > /dev/null 2>&1 && echo "jsonl: OK" || echo "jsonl: FAIL"
+          bash scripts/export.sh reports/audit.ledger csv > /dev/null 2>&1 && echo "csv: OK" || echo "csv: FAIL"
+          bash scripts/export.sh reports/audit.ledger pretty > /dev/null 2>&1 && echo "pretty: OK" || echo "pretty: FAIL"
