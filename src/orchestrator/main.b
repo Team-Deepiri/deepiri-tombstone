@@ -46,13 +46,13 @@ main() {
         return(cmd_trend());
     }
 
-    printf("deepiri-tombstone — Deepiri post-training eval*h");
+    printf("deepiri-tombstone — Deepiri post-training eval*n");
     printf("usage:*n");
-    printf("  deepiri-tombstone ping              check Ollama connectivity*h");
-    printf("  deepiri-tombstone ask <m> <p>       single prompt eval*h");
-    printf("  deepiri-tombstone eval [m] [f]      batch eval from fixture*h");
-    printf("  deepiri-tombstone models            list available models*h");
-    printf("  deepiri-tombstone compare           compare last two eval runs*h");
-    printf("  deepiri-tombstone trend             show eval trend summary*h");
+    printf("  deepiri-tombstone ping              check Ollama connectivity*n");
+    printf("  deepiri-tombstone ask <m> <p>       single prompt eval*n");
+    printf("  deepiri-tombstone eval [m] [f]      batch eval from fixture*n");
+    printf("  deepiri-tombstone models            list available models*n");
+    printf("  deepiri-tombstone compare           compare last two eval runs*n");
+    printf("  deepiri-tombstone trend             show eval trend summary*n");
     return(1);
 }
