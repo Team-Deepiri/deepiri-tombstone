@@ -91,6 +91,18 @@ static void load_host(void) {
     }
 }
 
+/* Retry configuration */
+#define MAX_RETRIES 3
+#define RETRY_DELAY_MS 1000
+#define TIMEOUT_SECONDS 120
+
+static int retry_count = 0;
+
+word_t set_retry_count(word_t n) {
+    retry_count = (int)n;
+    return 1;
+}
+
 static int shell_escape(const char *in, char *out, size_t outlen) {
     size_t j = 0;
     if (outlen < 3) return -1;
@@ -356,11 +368,91 @@ word_t run_score(word_t latency, word_t response_path) {
     return system(cmd) == 0 ? 1 : 0;
 }
 
+word_t run_score_args(word_t latency, word_t response_path, word_t category) {
+    char cmd[1536];
+    char esc_cat[256];
+    if (shell_escape((const char *)category, esc_cat, sizeof(esc_cat)) != 0)
+        return run_score(latency, response_path);
+    snprintf(cmd, sizeof(cmd), "bin/score %ld %s %s",
+             (long)latency, (const char *)response_path, esc_cat);
+    return system(cmd) == 0 ? 1 : 0;
+}
+
 word_t run_tokenize(word_t prompt) {
     char cmd[4096];
     char esc[2048];
     if (shell_escape((const char *)prompt, esc, sizeof(esc)) != 0) return 0;
     snprintf(cmd, sizeof(cmd), "printf '%%s\\n' %s | bin/tokenize", esc);
     return system(cmd) == 0 ? 1 : 0;
+}
+
+word_t ollama_retry_generate(word_t model, word_t prompt, word_t buf, word_t buflen) {
+    int attempt;
+    word_t result;
+    for (attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        result = ollama_generate(model, prompt, buf, buflen);
+        if (result > 0) return result;
+        if (attempt < MAX_RETRIES) {
+            struct timespec ts;
+            ts.tv_sec = RETRY_DELAY_MS / 1000;
+            ts.tv_nsec = (RETRY_DELAY_MS % 1000) * 1000000L;
+            nanosleep(&ts, NULL);
+        }
+    }
+    return 0;
+}
+
+word_t ollama_models(word_t buf, word_t buflen) {
+    char cmd[512];
+    char tmpfile[] = "/tmp/dt_models_XXXXXX";
+    FILE *fp;
+    int fd;
+
+    load_host();
+    fd = mkstemp(tmpfile);
+    if (fd < 0) return 0;
+    close(fd);
+
+    snprintf(cmd, sizeof(cmd),
+             "curl -sf http://%s/api/tags > %s 2>/dev/null",
+             g_host, tmpfile);
+
+    if (system(cmd) != 0) {
+        unlink(tmpfile);
+        return 0;
+    }
+
+    fp = fopen(tmpfile, "r");
+    if (!fp) {
+        unlink(tmpfile);
+        return 0;
+    }
+    size_t n = fread((char *)buf, 1, (size_t)buflen - 1, fp);
+    ((char *)buf)[n] = '\0';
+    fclose(fp);
+    unlink(tmpfile);
+    return (word_t)n;
+}
+
+word_t fixture_category(word_t prompt) {
+    const char *p = (const char *)prompt;
+    if (strstr(p, "code") || strstr(p, "function") || strstr(p, "binary search")
+        || strstr(p, "quicksort") || strstr(p, "Python") || strstr(p, "algorithm"))
+        return (word_t)"coding";
+    if (strstr(p, "capital") || strstr(p, "history") || strstr(p, "what is")
+        || strstr(p, "famous") || strstr(p, "language"))
+        return (word_t)"knowledge";
+    if (strstr(p, "say") || strstr(p, "respond") || strstr(p, "return")
+        || strstr(p, "repeat"))
+        return (word_t)"instruction";
+    if (strstr(p, "if") || strstr(p, "step") || strstr(p, "think")
+        || strstr(p, "reason") || strstr(p, "minutes"))
+        return (word_t)"reasoning";
+    if (strstr(p, "ignore") || strstr(p, "pick") || strstr(p, "how to")
+        || strstr(p, "tell me"))
+        return (word_t)"safety";
+    if (strstr(p, "hello") || strstr(p, "hi") || strstr(p, "haiku"))
+        return (word_t)"language";
+    return (word_t)"general";
 }
 

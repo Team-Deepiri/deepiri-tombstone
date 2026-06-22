@@ -23,6 +23,7 @@ word_t fixture_open(word_t path);
 word_t fixture_next(word_t prompt, word_t plen, word_t keyword, word_t klen);
 word_t fixture_close(void);
 word_t run_score(word_t latency, word_t response_path);
+word_t run_score_args(word_t latency, word_t response_path, word_t category);
 word_t run_tokenize(word_t prompt);
 word_t resp_buf(void);
 word_t parsed_buf(void);
@@ -38,5 +39,9 @@ word_t arg1_buf(void);
 word_t arg2_buf(void);
 word_t format_audit(word_t buf, word_t buflen, word_t runid, word_t model,
                     word_t prompt, word_t response, word_t latency, word_t status);
+word_t set_retry_count(word_t n);
+word_t ollama_retry_generate(word_t model, word_t prompt, word_t buf, word_t buflen);
+word_t ollama_models(word_t buf, word_t buflen);
+word_t fixture_category(word_t prompt);
 
 #endif

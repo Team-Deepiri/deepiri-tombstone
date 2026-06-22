@@ -1,7 +1,7 @@
 .PHONY: all help clean dist test verify unit-test smoke-test hooks install-completion \
         stats check-deps config archive watch clean-all components \
         validate-requirements validate-config validate-fixtures validate-scripts validate-commits \
-        update-changelog summary e2e benchmark \
+        update-changelog summary e2e benchmark compare-models trend report-full \
         libdeepiri_tombstone.a combined.b \
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
@@ -92,6 +92,15 @@ e2e:
 benchmark:
 	bash scripts/benchmark.sh
 
+compare-models:
+	bash scripts/compare-models.sh
+
+trend:
+	bash scripts/trend.sh
+
+report-full:
+	bash scripts/report.sh
+
 components:
 	@echo "Pipeline stages (src/):"
 	@echo "  orchestrator/  — B eval loop (ping, ask, eval)"
@@ -116,9 +125,9 @@ vendor/llvm/usr/bin/clang-18:
 
 B_BRIDGE_FUNCS := get_cmd get_arg1 get_arg2 format_run_id str_len str_copy getenv_str \
 	time_ms read_file write_file ollama_ping ollama_generate ollama_chat run_filter \
-	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_tokenize \
+	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_score_args run_tokenize \
 	resp_buf parsed_buf prompt_buf keyword_buf audit_buf runid_buf status_buf model_buf \
-	fixture_buf cmd_buf arg1_buf arg2_buf
+	fixture_buf cmd_buf arg1_buf arg2_buf set_retry_count ollama_retry_generate ollama_models fixture_category
 B_DEFSYMS := $(foreach fn,$(B_BRIDGE_FUNCS),-Wl,--defsym=b.$(fn)=$(fn))
 
 deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/clang-18

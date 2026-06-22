@@ -39,6 +39,16 @@
     .set b.format_audit,format_audit
     .globl b.run_score
     .set b.run_score,run_score
+    .globl b.run_score_args
+    .set b.run_score_args,run_score_args
     .globl b.run_tokenize
     .set b.run_tokenize,run_tokenize
+    .globl b.set_retry_count
+    .set b.set_retry_count,set_retry_count
+    .globl b.ollama_retry_generate
+    .set b.ollama_retry_generate,ollama_retry_generate
+    .globl b.ollama_models
+    .set b.ollama_models,ollama_models
+    .globl b.fixture_category
+    .set b.fixture_category,fixture_category
 #endif

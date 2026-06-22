@@ -1,31 +1,43 @@
 # Edge case fixtures
-# Each line: PROMPT|KEYWORD
+# Each line: PROMPT|KEYWORD|CATEGORY
 
 # Empty prompt
-|hello
+|hello|instruction
 # Very long prompt
-Repeat the word hello fifty times in a row without any other text hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello|hello
+Repeat the word hello fifty times in a row without any other text hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello|hello|instruction
 # Special characters
-Respond with exactly: back\slash|back\slash
-Respond with exactly: "double quotes"|double quotes
-Respond with exactly: new\nline|new
+Respond with exactly: back\\slash|back\\slash|language
+Respond with exactly: "double quotes"|double quotes|language
+Respond with exactly: new\nline|new|language
 # Unicode
-Say the word café|café
+Say the word café|café|language
 # Numbers only
-12345|12345
+12345|12345|knowledge
 # Case insensitive check
-RESPOND WITH uppercase|uppercase
+RESPOND WITH uppercase|uppercase|instruction
 # Whitespace only check
-One two three|three
+One two three|three|language
 # Keyword not present in response
-Say the word apple|banana
+Say the word apple|banana|language
 # Single character
-a|a
+a|a|language
 # Very short prompt
-Hi|Hi
+Hi|Hi|language
 # Multi-word keyword
-Say hello world|hello world
+Say hello world|hello world|language
 # Repeated keyword
-Repeat banana three times|banana
+Repeat banana three times|banana|instruction
 # No keyword
-This is just a plain prompt with no keyword requirement|
+This is just a plain prompt with no keyword requirement||instruction
+# Long unicode
+Say the following word: 你好世界|你好|language
+# Emoji
+What is your favorite animal? 🐱|animal|language
+# Multiple sentences
+This is a test of multiple sentences. Each one should be parsed correctly. Tell me about your day.|day|instruction
+# Reverse the word
+Write the word hello backwards|olleh|reasoning
+# Count to ten
+Count from 1 to 10 in order|1|reasoning
+# Complex reasoning
+What is the 7th letter of the alphabet?|g|reasoning
