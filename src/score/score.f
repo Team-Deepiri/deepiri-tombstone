@@ -16,6 +16,8 @@ C     Usage: score <latency_ms> <response_file> [category]
       CHARACTER*32 CNAMES(10)
       REAL CRATE(10)
       INTEGER TMPVAL
+      INTEGER LATCAT
+      REAL PCNT, PCNTR
 
       DO 5 CI = 1, 10
         CPASS(CI) = 0
