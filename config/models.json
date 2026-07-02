@@ -1,0 +1,22 @@
+{
+  "default_model": "llama3.2",
+  "judge_model": "llama3.2",
+  "eval_defaults": {
+    "temperature": 0.7,
+    "max_tokens": 2048
+  },
+  "models": {
+    "llama3.2": {
+      "provider": "ollama",
+      "parameters": {"temperature": 0.7, "top_p": 0.9, "max_tokens": 2048},
+      "cost_per_1k_tokens": 0.0,
+      "tags": ["general", "fast"]
+    },
+    "llama3.1": {
+      "provider": "ollama",
+      "parameters": {"temperature": 0.7, "top_p": 0.9, "max_tokens": 2048},
+      "cost_per_1k_tokens": 0.0,
+      "tags": ["general"]
+    }
+  }
+}

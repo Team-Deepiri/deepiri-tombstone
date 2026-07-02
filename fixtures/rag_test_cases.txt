@@ -1,0 +1,7 @@
+# RAG evaluation test cases
+# Format: question|answer|context|expected_faithfulness
+What is the capital of France?|Paris is the capital of France.|France is a country in Europe. Its capital is Paris.|0.9
+What is 2+2?|The answer is 4.|Mathematics is the study of numbers.|0.5
+Who wrote Romeo and Juliet?|Shakespeare wrote Romeo and Juliet.|William Shakespeare was an English playwright.|0.9
+What is the speed of light?|The speed of light is 299,792,458 m/s.|Light travels at approximately 300,000 km/s in vacuum.|0.8
+What is Python?|Python is a programming language created by Guido van Rossum.|Python is a high-level programming language.|1.0
