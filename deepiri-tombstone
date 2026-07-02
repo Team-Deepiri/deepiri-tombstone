@@ -5,7 +5,118 @@ if [[ ! -x "$ROOT/bin/deepiri-tombstone-core" ]]; then
   ROOT="$(cd "$ROOT/.." && pwd)"
 fi
 cd "$ROOT"
-export DEEPIRI_TOMBSTONE_CMD="${1:-}"
-export DEEPIRI_TOMBSTONE_ARG1="${2:-}"
-export DEEPIRI_TOMBSTONE_ARG2="${3:-}"
-exec "$ROOT/bin/deepiri-tombstone-core"
+
+CMD="${1:-}"
+ARG1="${2:-}"
+ARG2="${3:-}"
+ARG3="${4:-}"
+
+case "$CMD" in
+  ping|ask|eval)
+    export DEEPIRI_TOMBSTONE_CMD="$CMD"
+    export DEEPIRI_TOMBSTONE_ARG1="$ARG1"
+    export DEEPIRI_TOMBSTONE_ARG2="$ARG2"
+    exec "$ROOT/bin/deepiri-tombstone-core"
+    ;;
+  judge)
+    exec "$ROOT/bin/judge" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
+    ;;
+  mutate)
+    exec "$ROOT/bin/mutate" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  bench)
+    if [[ -z "$ARG1" ]]; then
+      echo "Usage: deepiri-tombstone bench <fixture> <model1> [model2 ...]" >&2
+      exit 1
+    fi
+    exec "$ROOT/bin/bench" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  synth)
+    exec "$ROOT/bin/synth" "$ARG1" "$ARG2"
+    ;;
+  dashboard)
+    exec "$ROOT/bin/dashboard" "$ARG1" "$ARG2"
+    ;;
+  trace)
+    exec "$ROOT/bin/trace" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  rag)
+    exec "$ROOT/bin/rag" "$ARG1" "$ARG2" "$ARG3" "$ARG3"
+    ;;
+  jury)
+    shift 3 2>/dev/null || true
+    exec "$ROOT/bin/jury" "$ARG1" "$ARG2" "$@"
+    ;;
+  replay)
+    exec "$ROOT/bin/replay" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  runner)
+    exec "$ROOT/bin/runner" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  checkpoint)
+    exec "$ROOT/bin/checkpoint" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  stats)
+    exec "$ROOT/bin/stats" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  guard)
+    exec "$ROOT/bin/guard" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}"
+    ;;
+  api)
+    exec "$ROOT/bin/api" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  notify)
+    exec "$ROOT/bin/notify" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}"
+    ;;
+  registry)
+    exec "$ROOT/bin/registry" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}" "${6:-}"
+    ;;
+  chat)
+    exec "$ROOT/bin/chat" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  cost)
+    exec "$ROOT/bin/cost" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}" "${6:-}"
+    ;;
+  export)
+    exec "$ROOT/bin/export" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  help|--help|-h)
+    echo "deepiri-tombstone — Deepiri post-training eval harness"
+    echo ""
+    echo "Core commands:"
+    echo "  ping                      — check Ollama connectivity"
+    echo "  ask <model> <prompt>      — single prompt evaluation"
+    echo "  eval [model] [fixture]    — batch evaluation from fixture"
+    echo ""
+    echo "Advanced evaluation commands:"
+    echo "  judge <model> <prompt> [response] [criteria]"
+    echo "                            — G-Eval LLM-as-a-Judge scoring"
+    echo "  mutate <fixture>          — adversarial prompt mutation"
+    echo "  bench <fixture> <model>... — multi-model benchmark"
+    echo "  synth <seed> [count]      — synthetic dataset generation"
+    echo "  dashboard                 — generate HTML report"
+    echo "  trace [start|view] [file] — span tracing"
+    echo ""
+    echo "Production evaluation commands:"
+    echo "  rag <metric> <q> <a> [ctx] — RAG metrics (faithfulness, relevance, recall)"
+    echo "  jury <prompt> <response> [jurors...]"
+    echo "                            — multi-juror consensus panel"
+    echo "  replay [ledger] [model]   — replay evaluations from ledger"
+    echo "  runner <fixture>          — parallel eval runner"
+    echo "  checkpoint <action>       — eval checkpoint/resume"
+    echo "  stats [file]              — statistical analysis"
+    echo "  guard <check> <text>      — safety & jailbreak detection"
+    echo "  api [--port] [--host]    — start REST API server"
+    echo "  notify <type> <url>       — webhook notifications"
+    echo "  registry <action> [name]  — model registry management"
+    echo "  chat [file]               — multi-turn chat evaluation"
+    echo "  cost <action> [args]      — cost analytics"
+    echo "  export <format> [output]   — export results (json/csv/md/html)"
+    exit 0
+    ;;
+  *)
+    echo "Unknown command: $CMD" >&2
+    echo "Try: deepiri-tombstone help" >&2
+    exit 1
+    ;;
+esac

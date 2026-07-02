@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        component: [awk, tokenize, score, audit, build_request, http_fallback]
+        component: [awk, tokenize, score, audit, build_request, http_fallback, judge, mutate, bench, synth, dashboard, trace]
     steps:
       - uses: actions/checkout@v7
       - name: Install deps

@@ -39,6 +39,13 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 | `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` |
 | `ask <model> <prompt>` | Single spot-check |
 | `eval [model] [fixture]` | Run fixture suite |
+| `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
+| `mutate <fixture>` | Adversarial prompt mutation |
+| `bench <fixture> <model>...` | Multi-model benchmark comparison |
+| `synth <seed> [count]` | Synthetic dataset generation |
+| `dashboard` | Generate HTML evaluation report |
+| `trace [start\|view] [file]` | Span tracing & observability |
+| `help` | Show full usage |
 
 ## Environment
 
@@ -46,6 +53,45 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 |----------|---------|---------|
 | `DEEPIRI_TOMBSTONE_MODEL` | `llama3.2` | Default model |
 | `DEEPIRI_TOMBSTONE_HOST` | `127.0.0.1:11434` | Ollama host |
+
+## Advanced features
+
+### G-Eval (LLM-as-a-Judge)
+```bash
+./deepiri-tombstone judge llama3.2 "What is 2+2?" response.txt
+```
+Scores responses on relevance, coherence, helpfulness, harmlessness, factuality, and completeness using a judge model. Returns JSON with per-criterion scores and overall.
+
+### Adversarial mutation
+```bash
+./deepiri-tombstone mutate fixtures/eval_prompts.txt
+```
+Generates 8 types of prompt mutations (typos, case attacks, prompt injections, Unicode homoglyphs) for stress-testing LLM robustness.
+
+### Multi-model benchmark
+```bash
+./deepiri-tombstone bench fixtures/eval_prompts.txt llama3.2 mistral phi
+```
+Runs the same eval across multiple models, comparing pass rates, latency, and response length.
+
+### Synthetic dataset generation
+```bash
+./deepiri-tombstone synth fixtures/eval_prompts.txt 10
+```
+Scales small seed sets into large evaluation datasets using Ollama for semantic variant generation.
+
+### HTML dashboard
+```bash
+./deepiri-tombstone dashboard
+```
+Generates a rich HTML report from evaluation results with pass/fail breakdowns and model comparison.
+
+### Span tracing
+```bash
+./deepiri-tombstone trace start    # outputs trace ID
+./deepiri-tombstone trace view reports/trace.json
+```
+Records timing spans for each pipeline stage with tree visualization.
 
 ## License
 
