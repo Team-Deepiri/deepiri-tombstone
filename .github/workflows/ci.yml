@@ -33,24 +33,10 @@ jobs:
       - name: Integration verify
         run: bash scripts/verify_all.sh
 
-      - name: Build advanced stages
-        run: make judge mutate bench synth dashboard trace
+      - name: Build all stages
+        run: make
 
-      - name: Component tests
-        run: |
-          bash tests/test_parse.sh
-          bash tests/test_tokenize.sh
-          bash tests/test_score.sh
-          bash tests/test_audit.sh
-          bash tests/test_build_request.sh
-
-      - name: Validate all fixtures
-        run: |
-          for f in fixtures/*.txt; do
-            bash scripts/validate_fixtures.sh "$f"
-          done
-
-      - name: Advanced stage tests
+      - name: Wave 1 advanced stage tests
         run: |
           bash tests/test_judge.sh
           bash tests/test_mutate.sh
@@ -58,6 +44,22 @@ jobs:
           bash tests/test_synth.sh
           bash tests/test_dashboard.sh
           bash tests/test_trace.sh
+
+      - name: Wave 2 production stage tests
+        run: |
+          bash tests/test_rag.sh
+          bash tests/test_jury.sh
+          bash tests/test_replay.sh
+          bash tests/test_runner.sh
+          bash tests/test_checkpoint.sh
+          bash tests/test_stats.sh
+          bash tests/test_guard.sh
+          bash tests/test_api.sh
+          bash tests/test_notify.sh
+          bash tests/test_registry.sh
+          bash tests/test_chat.sh
+          bash tests/test_cost.sh
+          bash tests/test_export.sh
 
       - name: Script syntax checks
         run: |

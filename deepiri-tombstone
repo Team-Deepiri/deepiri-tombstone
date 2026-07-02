@@ -19,16 +19,12 @@ case "$CMD" in
     exec "$ROOT/bin/deepiri-tombstone-core"
     ;;
   judge)
-    # judge <model> <prompt> [response-file] [criteria-file]
     exec "$ROOT/bin/judge" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
     ;;
   mutate)
-    # mutate <fixture> [-n mutations] [-o output]
     exec "$ROOT/bin/mutate" "$ARG1" "$ARG2" "$ARG3"
     ;;
   bench)
-    # bench <fixture> <model1> [model2 ...]
-    # Need to shift properly since models are variadic
     if [[ -z "$ARG1" ]]; then
       echo "Usage: deepiri-tombstone bench <fixture> <model1> [model2 ...]" >&2
       exit 1
@@ -36,16 +32,53 @@ case "$CMD" in
     exec "$ROOT/bin/bench" "$ARG1" "$ARG2" "$ARG3"
     ;;
   synth)
-    # synth <seed-file> [variants-per-seed]
     exec "$ROOT/bin/synth" "$ARG1" "$ARG2"
     ;;
   dashboard)
-    # dashboard [-o output.html]
     exec "$ROOT/bin/dashboard" "$ARG1" "$ARG2"
     ;;
   trace)
-    # trace [start|view] [trace-file]
     exec "$ROOT/bin/trace" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  rag)
+    exec "$ROOT/bin/rag" "$ARG1" "$ARG2" "$ARG3" "$ARG3"
+    ;;
+  jury)
+    shift 3 2>/dev/null || true
+    exec "$ROOT/bin/jury" "$ARG1" "$ARG2" "$@"
+    ;;
+  replay)
+    exec "$ROOT/bin/replay" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  runner)
+    exec "$ROOT/bin/runner" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  checkpoint)
+    exec "$ROOT/bin/checkpoint" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  stats)
+    exec "$ROOT/bin/stats" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  guard)
+    exec "$ROOT/bin/guard" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}"
+    ;;
+  api)
+    exec "$ROOT/bin/api" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  notify)
+    exec "$ROOT/bin/notify" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}"
+    ;;
+  registry)
+    exec "$ROOT/bin/registry" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}" "${6:-}"
+    ;;
+  chat)
+    exec "$ROOT/bin/chat" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  cost)
+    exec "$ROOT/bin/cost" "$ARG1" "$ARG2" "$ARG3" "${4:-}" "${5:-}" "${6:-}"
+    ;;
+  export)
+    exec "$ROOT/bin/export" "$ARG1" "$ARG2" "$ARG3"
     ;;
   help|--help|-h)
     echo "deepiri-tombstone — Deepiri post-training eval harness"
@@ -63,6 +96,22 @@ case "$CMD" in
     echo "  synth <seed> [count]      — synthetic dataset generation"
     echo "  dashboard                 — generate HTML report"
     echo "  trace [start|view] [file] — span tracing"
+    echo ""
+    echo "Production evaluation commands:"
+    echo "  rag <metric> <q> <a> [ctx] — RAG metrics (faithfulness, relevance, recall)"
+    echo "  jury <prompt> <response> [jurors...]"
+    echo "                            — multi-juror consensus panel"
+    echo "  replay [ledger] [model]   — replay evaluations from ledger"
+    echo "  runner <fixture>          — parallel eval runner"
+    echo "  checkpoint <action>       — eval checkpoint/resume"
+    echo "  stats [file]              — statistical analysis"
+    echo "  guard <check> <text>      — safety & jailbreak detection"
+    echo "  api [--port] [--host]    — start REST API server"
+    echo "  notify <type> <url>       — webhook notifications"
+    echo "  registry <action> [name]  — model registry management"
+    echo "  chat [file]               — multi-turn chat evaluation"
+    echo "  cost <action> [args]      — cost analytics"
+    echo "  export <format> [output]   — export results (json/csv/md/html)"
     exit 0
     ;;
   *)

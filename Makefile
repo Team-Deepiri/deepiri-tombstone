@@ -6,7 +6,12 @@
         bin/tokenize bin/score bin/audit bin/parse bin/build_request \
         bin/http_fallback deepiri-tombstone-core deepiri-tombstone \
         stage.tokenize stage.score stage.audit stage.parse stage.request stage.transport \
-        docker-build docker-run docker-shell man
+        docker-build docker-run docker-shell man \
+        stage.judge stage.mutate stage.bench stage.synth stage.dashboard stage.trace \
+        stage.rag stage.jury stage.replay stage.runner stage.checkpoint stage.stats \
+        stage.guard stage.api stage.notify stage.registry stage.chat stage.cost stage.export \
+        judge mutate bench synth dashboard trace \
+        rag jury replay runner checkpoint stats guard api notify registry chat cost export
 
 SRC_ORCH   := src/orchestrator
 SRC_BRIDGE := src/bridge
@@ -22,6 +27,19 @@ SRC_BENCH  := src/bench
 SRC_SYNTH  := src/synth
 SRC_REPORT := src/report
 SRC_TRACE  := src/trace
+SRC_RAG    := src/rag
+SRC_JURY   := src/jury
+SRC_REPLAY := src/replay
+SRC_RUNNER := src/runner
+SRC_CHECK  := src/checkpoint
+SRC_STATS  := src/stats
+SRC_GUARD  := src/guard
+SRC_API    := src/api
+SRC_NOTIFY := src/notify
+SRC_MODELS := src/models
+SRC_CHAT   := src/chat
+SRC_COST   := src/cost
+SRC_EXPORT := src/export
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -30,7 +48,8 @@ LLVM_LIB ?= $(CURDIR)/vendor/llvm/usr/lib/x86_64-linux-gnu
 LIBB ?= $(CURDIR)/vendor/libb.a
 export LD_LIBRARY_PATH := $(LLVM_LIB):$(LD_LIBRARY_PATH)
 
-all: deepiri-tombstone judge mutate bench synth dashboard trace
+all: deepiri-tombstone judge mutate bench synth dashboard trace \
+     rag jury replay runner checkpoint stats guard api notify registry chat cost export
 
 help:
 	@echo "deepiri-tombstone Makefile"
@@ -43,13 +62,26 @@ help:
 	@echo "  components      — list pipeline stages"
 	@echo "  docker-build    — build Docker image"
 	@echo ""
-	@echo "New Advanced Stages:"
+	@echo "Advanced evaluation stages:"
 	@echo "  judge           — G-Eval LLM-as-a-Judge scorer"
 	@echo "  mutate          — Adversarial prompt mutation engine"
 	@echo "  bench           — Multi-model benchmark runner"
 	@echo "  synth           — Synthetic dataset generator"
 	@echo "  dashboard       — HTML report dashboard generator"
 	@echo "  trace           — Span tracing & observability"
+	@echo "  rag             — RAG evaluation (faithfulness, relevance, recall)"
+	@echo "  jury            — Multi-juror consensus panel"
+	@echo "  replay          — Production replay engine"
+	@echo "  runner          — Parallel evaluation runner"
+	@echo "  checkpoint      — Evaluation checkpointing"
+	@echo "  stats           — Statistical analysis (CI, significance, trends)"
+	@echo "  guard           — Safety & jailbreak detection"
+	@echo "  api             — REST API server"
+	@echo "  notify          — Slack/Discord webhook notifications"
+	@echo "  registry        — Model configuration registry"
+	@echo "  chat            — Multi-turn chat evaluation"
+	@echo "  cost            — Cost analytics & estimation"
+	@echo "  export          — Results export (JSON/CSV/MD/HTML)"
 
 hooks:
 	bash scripts/install-hooks.sh
@@ -126,13 +158,26 @@ components:
 	@echo "  request/       — generate API JSON builder"
 	@echo "  transport/     — HTTP fallback client"
 	@echo ""
-	@echo "Advanced evaluation stages (new):"
+	@echo "Advanced evaluation stages:"
 	@echo "  judge/         — G-Eval LLM-as-a-Judge (Python)"
 	@echo "  mutate/        — Adversarial mutation engine (Python)"
 	@echo "  bench/         — Multi-model benchmark runner (Python)"
 	@echo "  synth/         — Synthetic dataset generator (Python)"
 	@echo "  report/        — HTML dashboard generator (Python)"
 	@echo "  trace/         — Span tracing & observability (Python)"
+	@echo "  rag/           — RAG evaluation metrics (Python)"
+	@echo "  jury/          — Multi-juror consensus panel (Python)"
+	@echo "  replay/        — Production replay engine (Python)"
+	@echo "  runner/        — Parallel eval runner (Python)"
+	@echo "  checkpoint/    — Eval checkpoint/resume (Python)"
+	@echo "  stats/         — Statistical analysis (Python)"
+	@echo "  guard/         — Safety & jailbreak detection (Python)"
+	@echo "  api/           — REST API server (Python)"
+	@echo "  notify/        — Webhook notifications (Python)"
+	@echo "  models/        — Model registry (Python)"
+	@echo "  chat/          — Multi-turn chat eval (Python)"
+	@echo "  cost/          — Cost analytics (Python)"
+	@echo "  export/        — Multi-format export (Python)"
 
 libdeepiri_tombstone.a: $(SRC_BRIDGE)/ollama_bridge.c $(SRC_BRIDGE)/ollama_bridge.h
 	$(CC) -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
@@ -258,6 +303,97 @@ bin/trace: $(SRC_TRACE)/trace.py
 	cp $(SRC_TRACE)/trace.py bin/trace
 	chmod +x bin/trace
 
+# --- Wave 2: Production evaluation stages ---
+
+bin/rag: $(SRC_RAG)/rag.py $(SRC_RAG)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_RAG)/rag.py bin/rag; \
+	else \
+	  cp $(SRC_RAG)/fallback.sh bin/rag; \
+	fi
+	chmod +x bin/rag
+
+bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_JURY)/jury.py bin/jury; \
+	else \
+	  cp $(SRC_JURY)/fallback.sh bin/jury; \
+	fi
+	chmod +x bin/jury
+
+bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_REPLAY)/replay.py bin/replay; \
+	else \
+	  cp $(SRC_REPLAY)/fallback.sh bin/replay; \
+	fi
+	chmod +x bin/replay
+
+bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_RUNNER)/runner.py bin/runner; \
+	else \
+	  cp $(SRC_RUNNER)/fallback.sh bin/runner; \
+	fi
+	chmod +x bin/runner
+
+bin/checkpoint: $(SRC_CHECK)/checkpoint.py
+	@mkdir -p bin
+	cp $(SRC_CHECK)/checkpoint.py bin/checkpoint
+	chmod +x bin/checkpoint
+
+bin/stats: $(SRC_STATS)/stats.py $(SRC_STATS)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_STATS)/stats.py bin/stats; \
+	else \
+	  cp $(SRC_STATS)/fallback.sh bin/stats; \
+	fi
+	chmod +x bin/stats
+
+bin/guard: $(SRC_GUARD)/guard.py $(SRC_GUARD)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_GUARD)/guard.py bin/guard; \
+	else \
+	  cp $(SRC_GUARD)/fallback.sh bin/guard; \
+	fi
+	chmod +x bin/guard
+
+bin/api: $(SRC_API)/server.py
+	@mkdir -p bin
+	cp $(SRC_API)/server.py bin/api
+	chmod +x bin/api
+
+bin/notify: $(SRC_NOTIFY)/notify.py
+	@mkdir -p bin
+	cp $(SRC_NOTIFY)/notify.py bin/notify
+	chmod +x bin/notify
+
+bin/registry: $(SRC_MODELS)/registry.py
+	@mkdir -p bin
+	cp $(SRC_MODELS)/registry.py bin/registry
+	chmod +x bin/registry
+
+bin/chat: $(SRC_CHAT)/chat.py
+	@mkdir -p bin
+	cp $(SRC_CHAT)/chat.py bin/chat
+	chmod +x bin/chat
+
+bin/cost: $(SRC_COST)/cost.py
+	@mkdir -p bin
+	cp $(SRC_COST)/cost.py bin/cost
+	chmod +x bin/cost
+
+bin/export: $(SRC_EXPORT)/export.py
+	@mkdir -p bin
+	cp $(SRC_EXPORT)/export.py bin/export
+	chmod +x bin/export
+
 # --- Stage aliases ---
 
 stage.tokenize: bin/tokenize
@@ -272,6 +408,19 @@ stage.bench: bin/bench
 stage.synth: bin/synth
 stage.dashboard: bin/dashboard
 stage.trace: bin/trace
+stage.rag: bin/rag
+stage.jury: bin/jury
+stage.replay: bin/replay
+stage.runner: bin/runner
+stage.checkpoint: bin/checkpoint
+stage.stats: bin/stats
+stage.guard: bin/guard
+stage.api: bin/api
+stage.notify: bin/notify
+stage.registry: bin/registry
+stage.chat: bin/chat
+stage.cost: bin/cost
+stage.export: bin/export
 
 judge: bin/judge
 mutate: bin/mutate
@@ -279,12 +428,27 @@ bench: bin/bench
 synth: bin/synth
 dashboard: bin/dashboard
 trace: bin/trace
+rag: bin/rag
+jury: bin/jury
+replay: bin/replay
+runner: bin/runner
+checkpoint: bin/checkpoint
+stats: bin/stats
+guard: bin/guard
+api: bin/api
+notify: bin/notify
+registry: bin/registry
+chat: bin/chat
+cost: bin/cost
+export: bin/export
 
 clean:
 	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
 	rm -f bin/deepiri-tombstone-core deepiri-tombstone
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
+	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
+	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export
 
 dist: clean all
 
