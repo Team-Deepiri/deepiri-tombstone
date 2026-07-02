@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Validate fixture file format — supports 2-column (PROMPT|KEYWORD)
-# and 3-column (PROMPT|KEYWORD|CATEGORY) formats
+# Validate fixture file format — supports 2-column (PROMPT|KEYWORD),
+# 3-column (PROMPT|KEYWORD|CATEGORY), and 4-column (QUESTION|ANSWER|CONTEXT|SCORE) formats
 set -euo pipefail
 
 file="${1:-fixtures/eval_prompts.txt}"
@@ -29,10 +29,10 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     continue
   fi
 
-  # Validate 2 or 3 column format
+  # Validate 2-4 column format (supports eval, RAG, etc.)
   pipe_count=$(echo "$line" | awk -F'|' '{print NF-1}')
-  if [[ "$pipe_count" -lt 1 || "$pipe_count" -gt 2 ]]; then
-    echo "ERROR:$line_num: bad format (expected 1-2 pipes, got $pipe_count): $line" >&2
+  if [[ "$pipe_count" -lt 1 || "$pipe_count" -gt 3 ]]; then
+    echo "ERROR:$line_num: bad format (expected 1-3 pipes, got $pipe_count): $line" >&2
     errors=$((errors + 1))
     continue
   fi
