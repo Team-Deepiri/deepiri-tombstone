@@ -104,7 +104,13 @@ grep -q '"model"' /tmp/dt_req.json && grep -q '"prompt"' /tmp/dt_req.json && \
 bash src/request/fallback.sh test 'hello "world"' > /tmp/dt_req2.json
 grep -q 'hello' /tmp/dt_req2.json && pass "Build request special chars" || fail "Build request special chars"
 
-# ---- 8. Script syntax ----
+# ---- 8. Advanced stage tests ----
+header "Advanced stage tests"
+for t in test_judge test_mutate test_bench test_synth test_dashboard test_trace; do
+  bash "tests/${t}.sh" && pass "${t}" || fail "${t}"
+done
+
+# ---- 9. Script syntax ----
 header "Shell script syntax"
 for f in scripts/*.sh; do
   bash -n "$f" 2>/dev/null && pass "bash syntax: $(basename "$f")" || fail "bash syntax: $(basename "$f")"

@@ -16,6 +16,12 @@ SRC_SCORE  := src/score
 SRC_AUDIT  := src/audit
 SRC_REQ    := src/request
 SRC_HTTP   := src/transport
+SRC_JUDGE  := src/judge
+SRC_MUTATE := src/mutate
+SRC_BENCH  := src/bench
+SRC_SYNTH  := src/synth
+SRC_REPORT := src/report
+SRC_TRACE  := src/trace
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -24,7 +30,7 @@ LLVM_LIB ?= $(CURDIR)/vendor/llvm/usr/lib/x86_64-linux-gnu
 LIBB ?= $(CURDIR)/vendor/libb.a
 export LD_LIBRARY_PATH := $(LLVM_LIB):$(LD_LIBRARY_PATH)
 
-all: deepiri-tombstone
+all: deepiri-tombstone judge mutate bench synth dashboard trace
 
 help:
 	@echo "deepiri-tombstone Makefile"
@@ -36,6 +42,14 @@ help:
 	@echo "  smoke-test      — quick project health check"
 	@echo "  components      — list pipeline stages"
 	@echo "  docker-build    — build Docker image"
+	@echo ""
+	@echo "New Advanced Stages:"
+	@echo "  judge           — G-Eval LLM-as-a-Judge scorer"
+	@echo "  mutate          — Adversarial prompt mutation engine"
+	@echo "  bench           — Multi-model benchmark runner"
+	@echo "  synth           — Synthetic dataset generator"
+	@echo "  dashboard       — HTML report dashboard generator"
+	@echo "  trace           — Span tracing & observability"
 
 hooks:
 	bash scripts/install-hooks.sh
@@ -111,6 +125,14 @@ components:
 	@echo "  audit/         — eval ledger append"
 	@echo "  request/       — generate API JSON builder"
 	@echo "  transport/     — HTTP fallback client"
+	@echo ""
+	@echo "Advanced evaluation stages (new):"
+	@echo "  judge/         — G-Eval LLM-as-a-Judge (Python)"
+	@echo "  mutate/        — Adversarial mutation engine (Python)"
+	@echo "  bench/         — Multi-model benchmark runner (Python)"
+	@echo "  synth/         — Synthetic dataset generator (Python)"
+	@echo "  report/        — HTML dashboard generator (Python)"
+	@echo "  trace/         — Span tracing & observability (Python)"
 
 libdeepiri_tombstone.a: $(SRC_BRIDGE)/ollama_bridge.c $(SRC_BRIDGE)/ollama_bridge.h
 	$(CC) -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
@@ -188,17 +210,81 @@ bin/http_fallback: $(SRC_HTTP)/http_fallback.pl
 	cp $(SRC_HTTP)/http_fallback.pl bin/http_fallback
 	chmod +x bin/http_fallback
 
+# --- Advanced evaluation stages ---
+
+bin/judge: $(SRC_JUDGE)/judge.py $(SRC_JUDGE)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_JUDGE)/judge.py bin/judge; \
+	else \
+	  cp $(SRC_JUDGE)/fallback.sh bin/judge; \
+	fi
+	chmod +x bin/judge
+
+bin/mutate: $(SRC_MUTATE)/mutate.py $(SRC_MUTATE)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_MUTATE)/mutate.py bin/mutate; \
+	else \
+	  cp $(SRC_MUTATE)/fallback.sh bin/mutate; \
+	fi
+	chmod +x bin/mutate
+
+bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_BENCH)/bench.py bin/bench; \
+	else \
+	  cp $(SRC_BENCH)/fallback.sh bin/bench; \
+	fi
+	chmod +x bin/bench
+
+bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
+	@mkdir -p bin
+	if command -v python3 >/dev/null 2>&1; then \
+	  cp $(SRC_SYNTH)/synth.py bin/synth; \
+	else \
+	  cp $(SRC_SYNTH)/fallback.sh bin/synth; \
+	fi
+	chmod +x bin/synth
+
+bin/dashboard: $(SRC_REPORT)/dashboard.py
+	@mkdir -p bin
+	cp $(SRC_REPORT)/dashboard.py bin/dashboard
+	chmod +x bin/dashboard
+
+bin/trace: $(SRC_TRACE)/trace.py
+	@mkdir -p bin
+	cp $(SRC_TRACE)/trace.py bin/trace
+	chmod +x bin/trace
+
+# --- Stage aliases ---
+
 stage.tokenize: bin/tokenize
 stage.score: bin/score
 stage.audit: bin/audit
 stage.parse: bin/parse
 stage.request: bin/build_request
 stage.transport: bin/http_fallback
+stage.judge: bin/judge
+stage.mutate: bin/mutate
+stage.bench: bin/bench
+stage.synth: bin/synth
+stage.dashboard: bin/dashboard
+stage.trace: bin/trace
+
+judge: bin/judge
+mutate: bin/mutate
+bench: bin/bench
+synth: bin/synth
+dashboard: bin/dashboard
+trace: bin/trace
 
 clean:
 	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
 	rm -f bin/deepiri-tombstone-core deepiri-tombstone
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
+	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 
 dist: clean all
 

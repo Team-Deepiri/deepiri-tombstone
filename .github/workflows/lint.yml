@@ -80,3 +80,16 @@ jobs:
         run: bash scripts/validate-config.sh
       - name: Validate requirements
         run: bash scripts/validate-requirements.sh
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Python syntax check
+        run: |
+          python3 -m py_compile src/judge/judge.py
+          python3 -m py_compile src/mutate/mutate.py
+          python3 -m py_compile src/bench/bench.py
+          python3 -m py_compile src/synth/synth.py
+          python3 -m py_compile src/report/dashboard.py
+          python3 -m py_compile src/trace/trace.py

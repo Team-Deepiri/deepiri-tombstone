@@ -5,7 +5,69 @@ if [[ ! -x "$ROOT/bin/deepiri-tombstone-core" ]]; then
   ROOT="$(cd "$ROOT/.." && pwd)"
 fi
 cd "$ROOT"
-export DEEPIRI_TOMBSTONE_CMD="${1:-}"
-export DEEPIRI_TOMBSTONE_ARG1="${2:-}"
-export DEEPIRI_TOMBSTONE_ARG2="${3:-}"
-exec "$ROOT/bin/deepiri-tombstone-core"
+
+CMD="${1:-}"
+ARG1="${2:-}"
+ARG2="${3:-}"
+ARG3="${4:-}"
+
+case "$CMD" in
+  ping|ask|eval)
+    export DEEPIRI_TOMBSTONE_CMD="$CMD"
+    export DEEPIRI_TOMBSTONE_ARG1="$ARG1"
+    export DEEPIRI_TOMBSTONE_ARG2="$ARG2"
+    exec "$ROOT/bin/deepiri-tombstone-core"
+    ;;
+  judge)
+    # judge <model> <prompt> [response-file] [criteria-file]
+    exec "$ROOT/bin/judge" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
+    ;;
+  mutate)
+    # mutate <fixture> [-n mutations] [-o output]
+    exec "$ROOT/bin/mutate" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  bench)
+    # bench <fixture> <model1> [model2 ...]
+    # Need to shift properly since models are variadic
+    if [[ -z "$ARG1" ]]; then
+      echo "Usage: deepiri-tombstone bench <fixture> <model1> [model2 ...]" >&2
+      exit 1
+    fi
+    exec "$ROOT/bin/bench" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  synth)
+    # synth <seed-file> [variants-per-seed]
+    exec "$ROOT/bin/synth" "$ARG1" "$ARG2"
+    ;;
+  dashboard)
+    # dashboard [-o output.html]
+    exec "$ROOT/bin/dashboard" "$ARG1" "$ARG2"
+    ;;
+  trace)
+    # trace [start|view] [trace-file]
+    exec "$ROOT/bin/trace" "$ARG1" "$ARG2" "$ARG3"
+    ;;
+  help|--help|-h)
+    echo "deepiri-tombstone — Deepiri post-training eval harness"
+    echo ""
+    echo "Core commands:"
+    echo "  ping                      — check Ollama connectivity"
+    echo "  ask <model> <prompt>      — single prompt evaluation"
+    echo "  eval [model] [fixture]    — batch evaluation from fixture"
+    echo ""
+    echo "Advanced evaluation commands:"
+    echo "  judge <model> <prompt> [response] [criteria]"
+    echo "                            — G-Eval LLM-as-a-Judge scoring"
+    echo "  mutate <fixture>          — adversarial prompt mutation"
+    echo "  bench <fixture> <model>... — multi-model benchmark"
+    echo "  synth <seed> [count]      — synthetic dataset generation"
+    echo "  dashboard                 — generate HTML report"
+    echo "  trace [start|view] [file] — span tracing"
+    exit 0
+    ;;
+  *)
+    echo "Unknown command: $CMD" >&2
+    echo "Try: deepiri-tombstone help" >&2
+    exit 1
+    ;;
+esac

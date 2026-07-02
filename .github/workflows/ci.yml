@@ -33,6 +33,9 @@ jobs:
       - name: Integration verify
         run: bash scripts/verify_all.sh
 
+      - name: Build advanced stages
+        run: make judge mutate bench synth dashboard trace
+
       - name: Component tests
         run: |
           bash tests/test_parse.sh
@@ -43,13 +46,18 @@ jobs:
 
       - name: Validate all fixtures
         run: |
-          bash scripts/validate_fixtures.sh fixtures/eval_prompts.txt
-          bash scripts/validate_fixtures.sh fixtures/benchmark_prompts.txt
-          bash scripts/validate_fixtures.sh fixtures/edge_cases.txt
-          bash scripts/validate_fixtures.sh fixtures/stress_prompts.txt
+          for f in fixtures/*.txt; do
+            bash scripts/validate_fixtures.sh "$f"
+          done
 
-      - name: Benchmark dry-run
-        run: bash scripts/benchmark.sh 3
+      - name: Advanced stage tests
+        run: |
+          bash tests/test_judge.sh
+          bash tests/test_mutate.sh
+          bash tests/test_bench.sh
+          bash tests/test_synth.sh
+          bash tests/test_dashboard.sh
+          bash tests/test_trace.sh
 
       - name: Script syntax checks
         run: |
