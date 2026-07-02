@@ -13,5 +13,4 @@ vendor/
 vendor/llvm/
 .DS_Store
 *.deb
-
-src/bench/__pycache__/
+__pycache__/
