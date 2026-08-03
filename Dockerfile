@@ -44,7 +44,7 @@ COPY --from=build /src/docs/ docs/
 COPY --from=build /src/vendor/ vendor/
 COPY --from=build /src/Makefile .
 COPY --from=build /src/VERSION .
-COPY --from=build /src/scripts/run-b.sh ./deepiri-tombstone
+COPY --from=build /src/deepiri-tombstone ./deepiri-tombstone
 COPY --from=build /src/.env.example .
 
 RUN mkdir -p reports
