@@ -6,6 +6,14 @@ Produces rich visual reports from evaluation results.
 import json, sys, os, argparse
 from datetime import datetime
 
+# Installed beside this script in bin/, or under src/common/ when run in tree.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.exists(os.path.join(_cand, "ledger.py")):
+        sys.path.insert(0, _cand)
+        break
+from ledger import load_ledger
+
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,25 +91,17 @@ def parse_stats(path):
     return stats
 
 def parse_audit(path):
-    """Parse reports/audit.ledger"""
+    """Parse reports/audit.ledger, truncating long fields for display."""
     entries = []
-    if not os.path.exists(path):
-        return entries
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split('|')
-            if len(parts) >= 6:
-                entries.append({
-                    "run_id": parts[0],
-                    "model": parts[1],
-                    "prompt": parts[2][:60],
-                    "response": parts[3][:80],
-                    "latency": parts[4],
-                    "status": parts[5],
-                })
+    for e in load_ledger(path):
+        entries.append({
+            "run_id": e["run_id"],
+            "model": e["model"],
+            "prompt": e["prompt"][:60],
+            "response": e["response"][:80],
+            "latency": e["latency_ms"],
+            "status": e["status"],
+        })
     return entries
 
 def build_model_comparison(summary):
