@@ -45,6 +45,8 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 | `synth <seed> [count]` | Synthetic dataset generation |
 | `dashboard` | Generate HTML evaluation report |
 | `trace [start\|view] [file]` | Span tracing & observability |
+| `rag <metric> <question> <answer> [context]` | RAG metrics — pass the retrieved context as the 4th argument |
+| `version` | Print the harness version |
 | `help` | Show full usage |
 
 ## Environment

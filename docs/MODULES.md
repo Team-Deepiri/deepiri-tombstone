@@ -10,5 +10,6 @@
 | Audit | `src/audit/ledger.cob` | Compliance ledger |
 | Request | `src/request/build_request.b` | Generate API JSON |
 | Transport | `src/transport/http_fallback.pl` | Backup HTTP client |
+| Common | `src/common/ledger.py` | Shared audit-ledger parsing for the Python stages |
 
 See [src/README.md](../src/README.md) for the full layout.
