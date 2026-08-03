@@ -104,17 +104,19 @@ grep -q '"model"' /tmp/dt_req.json && grep -q '"prompt"' /tmp/dt_req.json && \
 bash src/request/fallback.sh test 'hello "world"' > /tmp/dt_req2.json
 grep -q 'hello' /tmp/dt_req2.json && pass "Build request special chars" || fail "Build request special chars"
 
-# ---- 8. Wave 1 advanced stage tests ----
-header "Wave 1 advanced stage tests"
-for t in test_judge test_mutate test_bench test_synth test_dashboard test_trace; do
-  bash "tests/${t}.sh" && pass "${t}" || fail "${t}"
-done
-
-# ---- 9. Wave 2 production stage tests ----
-header "Wave 2 production stage tests"
-for t in test_rag test_jury test_replay test_runner test_checkpoint test_stats \
-          test_guard test_api test_notify test_registry test_chat test_cost test_export; do
-  bash "tests/${t}.sh" && pass "${t}" || fail "${t}"
+# ---- 8. Stage test suites ----
+# Discovered rather than listed: the previous hardcoded waves meant a new
+# tests/test_*.sh was never run here until someone remembered to add it.
+header "Stage test suites"
+# Covered by the dedicated sections above.
+already_covered="test_audit test_awk test_build_request test_http_fallback \
+                 test_parse test_score test_tokenize"
+for t in tests/test_*.sh; do
+  name=$(basename "$t" .sh)
+  case " $already_covered " in
+    *" $name "*) continue ;;
+  esac
+  bash "$t" && pass "${name}" || fail "${name}"
 done
 
 # ---- 10. Script syntax ----
