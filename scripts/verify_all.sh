@@ -105,17 +105,16 @@ bash src/request/fallback.sh test 'hello "world"' > /tmp/dt_req2.json
 grep -q 'hello' /tmp/dt_req2.json && pass "Build request special chars" || fail "Build request special chars"
 
 # ---- 8. Stage test suites ----
-# Discovered rather than listed: the previous hardcoded waves meant a new
-# tests/test_*.sh was never run here until someone remembered to add it.
+# Discovered rather than listed, with no exclusions: the previous hardcoded
+# waves meant a new tests/test_*.sh was never run here until someone
+# remembered to add it, and an exclusion list would drift the same way.
+#
+# The sections above are not a substitute for these suites. They exercise the
+# native toolchains (gforth, cobc, gfortran) and the fallback shells directly,
+# which the suites do not; running both is intentional.
 header "Stage test suites"
-# Covered by the dedicated sections above.
-already_covered="test_audit test_awk test_build_request test_http_fallback \
-                 test_parse test_score test_tokenize"
 for t in tests/test_*.sh; do
   name=$(basename "$t" .sh)
-  case " $already_covered " in
-    *" $name "*) continue ;;
-  esac
   bash "$t" && pass "${name}" || fail "${name}"
 done
 
