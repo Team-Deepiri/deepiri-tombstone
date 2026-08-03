@@ -6,22 +6,13 @@ Re-runs evaluations from audit ledger and compares results across runs.
 import json, sys, os, subprocess, argparse, time
 from datetime import datetime
 
-def parse_ledger(path):
-    entries = []
-    if not os.path.exists(path):
-        return entries
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            parts = line.split('|')
-            if len(parts) >= 6:
-                entries.append({
-                    "run_id": parts[0], "model": parts[1],
-                    "prompt": parts[2], "response": parts[3],
-                    "latency_ms": parts[4], "status": parts[5],
-                })
-    return entries
+# Installed beside this script in bin/, or under src/common/ when run in tree.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.exists(os.path.join(_cand, "ledger.py")):
+        sys.path.insert(0, _cand)
+        break
+from ledger import load_ledger as parse_ledger
 
 def replay_entry(entry, model, host):
     """Re-run a single prompt/response evaluation"""

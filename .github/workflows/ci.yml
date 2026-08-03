@@ -36,30 +36,8 @@ jobs:
       - name: Build all stages
         run: make
 
-      - name: Wave 1 advanced stage tests
-        run: |
-          bash tests/test_judge.sh
-          bash tests/test_mutate.sh
-          bash tests/test_bench.sh
-          bash tests/test_synth.sh
-          bash tests/test_dashboard.sh
-          bash tests/test_trace.sh
-
-      - name: Wave 2 production stage tests
-        run: |
-          bash tests/test_rag.sh
-          bash tests/test_jury.sh
-          bash tests/test_replay.sh
-          bash tests/test_runner.sh
-          bash tests/test_checkpoint.sh
-          bash tests/test_stats.sh
-          bash tests/test_guard.sh
-          bash tests/test_api.sh
-          bash tests/test_notify.sh
-          bash tests/test_registry.sh
-          bash tests/test_chat.sh
-          bash tests/test_cost.sh
-          bash tests/test_export.sh
+      - name: Unit test suites
+        run: bash tests/run_tests.sh
 
       - name: Script syntax checks
         run: |

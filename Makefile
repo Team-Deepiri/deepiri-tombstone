@@ -40,6 +40,7 @@ SRC_MODELS := src/models
 SRC_CHAT   := src/chat
 SRC_COST   := src/cost
 SRC_EXPORT := src/export
+SRC_COMMON := src/common
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -203,8 +204,10 @@ deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/cl
 	$(BLANG) combined.b --emit-llvm -o combined.ll
 	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
 
-deepiri-tombstone: deepiri-tombstone-core scripts/run-b.sh bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
-	cp scripts/run-b.sh deepiri-tombstone
+# ./deepiri-tombstone is the checked-in dispatcher and is not generated.
+# scripts/run-b.sh only reaches the B core (ping/ask/eval); copying it over
+# the dispatcher dropped every other command from a freshly built tree.
+deepiri-tombstone: deepiri-tombstone-core bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	chmod +x deepiri-tombstone bin/deepiri-tombstone-core bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 
 test verify:
@@ -293,7 +296,13 @@ bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
 	fi
 	chmod +x bin/synth
 
-bin/dashboard: $(SRC_REPORT)/dashboard.py
+# Stages are installed as standalone copies, so the shared ledger parser
+# has to sit beside them in bin/ for the import to resolve.
+bin/ledger.py: $(SRC_COMMON)/ledger.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/ledger.py bin/ledger.py
+
+bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_REPORT)/dashboard.py bin/dashboard
 	chmod +x bin/dashboard
@@ -323,7 +332,7 @@ bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
 	fi
 	chmod +x bin/jury
 
-bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh
+bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_REPLAY)/replay.py bin/replay; \
@@ -384,12 +393,12 @@ bin/chat: $(SRC_CHAT)/chat.py
 	cp $(SRC_CHAT)/chat.py bin/chat
 	chmod +x bin/chat
 
-bin/cost: $(SRC_COST)/cost.py
+bin/cost: $(SRC_COST)/cost.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_COST)/cost.py bin/cost
 	chmod +x bin/cost
 
-bin/export: $(SRC_EXPORT)/export.py
+bin/export: $(SRC_EXPORT)/export.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_EXPORT)/export.py bin/export
 	chmod +x bin/export
@@ -444,11 +453,12 @@ export: bin/export
 
 clean:
 	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
-	rm -f bin/deepiri-tombstone-core deepiri-tombstone
+	rm -f bin/deepiri-tombstone-core
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
 	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export
+	rm -f bin/ledger.py
 
 dist: clean all
 

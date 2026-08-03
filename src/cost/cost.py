@@ -6,6 +6,14 @@ Track token usage and estimate costs across models.
 import json, sys, os, argparse
 from datetime import datetime
 
+# Installed beside this script in bin/, or under src/common/ when run in tree.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.exists(os.path.join(_cand, "ledger.py")):
+        sys.path.insert(0, _cand)
+        break
+from ledger import load_ledger
+
 MODEL_COSTS = {
     "llama3.2": {"input_per_1k": 0.0, "output_per_1k": 0.0, "notes": "local"},
     "llama3.1": {"input_per_1k": 0.0, "output_per_1k": 0.0, "notes": "local"},
@@ -14,8 +22,10 @@ MODEL_COSTS = {
     "phi3": {"input_per_1k": 0.0, "output_per_1k": 0.0, "notes": "local"},
     "gpt-4": {"input_per_1k": 0.03, "output_per_1k": 0.06, "notes": "openai"},
     "gpt-3.5-turbo": {"input_per_1k": 0.0015, "output_per_1k": 0.002, "notes": "openai"},
-    "claude-3-haiku": {"input_per_1k": 0.00025, "output_per_1k": 0.00125, "notes": "anthropic"},
-    "claude-3-sonnet": {"input_per_1k": 0.003, "output_per_1k": 0.015, "notes": "anthropic"},
+    # Anthropic rates are per 1M tokens upstream; divided by 1000 here.
+    "claude-opus-5": {"input_per_1k": 0.005, "output_per_1k": 0.025, "notes": "anthropic"},
+    "claude-sonnet-5": {"input_per_1k": 0.003, "output_per_1k": 0.015, "notes": "anthropic"},
+    "claude-haiku-4-5": {"input_per_1k": 0.001, "output_per_1k": 0.005, "notes": "anthropic"},
 }
 
 def estimate_tokens(text):
@@ -41,17 +51,9 @@ def estimate_cost(model, input_text, output_text):
 
 def analyze_ledger_costs(ledger_path, model_override=None):
     costs = []
-    if not os.path.exists(ledger_path): return costs
-    with open(ledger_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line: continue
-            parts = line.split('|')
-            if len(parts) >= 4:
-                model = model_override or parts[1]
-                prompt = parts[2]
-                response = parts[3]
-                costs.append(estimate_cost(model, prompt, response))
+    for entry in load_ledger(ledger_path):
+        model = model_override or entry["model"]
+        costs.append(estimate_cost(model, entry["prompt"], entry["response"]))
     return costs
 
 def main():

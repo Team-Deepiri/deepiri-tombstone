@@ -19,6 +19,16 @@ test_cost() {
 
 echo "=== Cost tests ==="
 
+# Own fixture ledger: relying on one written by another suite made this
+# file pass or fail depending on test execution order.
+LEDGER=$(mktemp)
+cat > "$LEDGER" <<'LINES'
+run-001|llama3.2|What is 2+2?|4|500|PASS
+run-002|llama3.2|Say YES|YES|300|PASS
+run-003|llama3.2|Return JSON|fail|1000|FAIL
+run-004|mistral|Capital of France|Paris|200|PASS
+LINES
+
 test_cost "estimate action" "total_cost_usd" python3 "$ROOT/src/cost/cost.py" estimate -m llama3.2 --prompt "Hello" --response "World"
 
 test_cost "models action lists models" "llama3.2" python3 "$ROOT/src/cost/cost.py" models
@@ -27,11 +37,13 @@ test_cost "models action shows pricing" "input_per_1k" python3 "$ROOT/src/cost/c
 
 test_cost "missing prompt defaults" "total_tokens" python3 "$ROOT/src/cost/cost.py" estimate -m gpt-4
 
-test_cost "ledger action reads file" "total_tokens" python3 "$ROOT/src/cost/cost.py" ledger -l "$ROOT/reports/audit.ledger"
+test_cost "ledger action reads file" "total_tokens" python3 "$ROOT/src/cost/cost.py" ledger -l "$LEDGER"
 
 test_cost "ledger with missing file" "No entries" python3 "$ROOT/src/cost/cost.py" ledger -l /tmp/nonexistent_ledger.dat
 
 test_cost "no args shows usage" "usage:" python3 "$ROOT/src/cost/cost.py"
+
+rm -f "$LEDGER"
 
 echo ""
 if [[ "$errors" -eq 0 ]]; then echo "ALL COST TESTS PASSED"
