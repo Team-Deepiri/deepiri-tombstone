@@ -22,8 +22,10 @@ MODEL_COSTS = {
     "phi3": {"input_per_1k": 0.0, "output_per_1k": 0.0, "notes": "local"},
     "gpt-4": {"input_per_1k": 0.03, "output_per_1k": 0.06, "notes": "openai"},
     "gpt-3.5-turbo": {"input_per_1k": 0.0015, "output_per_1k": 0.002, "notes": "openai"},
-    "claude-3-haiku": {"input_per_1k": 0.00025, "output_per_1k": 0.00125, "notes": "anthropic"},
-    "claude-3-sonnet": {"input_per_1k": 0.003, "output_per_1k": 0.015, "notes": "anthropic"},
+    # Anthropic rates are per 1M tokens upstream; divided by 1000 here.
+    "claude-opus-5": {"input_per_1k": 0.005, "output_per_1k": 0.025, "notes": "anthropic"},
+    "claude-sonnet-5": {"input_per_1k": 0.003, "output_per_1k": 0.015, "notes": "anthropic"},
+    "claude-haiku-4-5": {"input_per_1k": 0.001, "output_per_1k": 0.005, "notes": "anthropic"},
 }
 
 def estimate_tokens(text):
