@@ -204,8 +204,10 @@ deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/cl
 	$(BLANG) combined.b --emit-llvm -o combined.ll
 	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
 
-deepiri-tombstone: deepiri-tombstone-core scripts/run-b.sh bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
-	cp scripts/run-b.sh deepiri-tombstone
+# ./deepiri-tombstone is the checked-in dispatcher and is not generated.
+# scripts/run-b.sh only reaches the B core (ping/ask/eval); copying it over
+# the dispatcher dropped every other command from a freshly built tree.
+deepiri-tombstone: deepiri-tombstone-core bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	chmod +x deepiri-tombstone bin/deepiri-tombstone-core bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 
 test verify:
@@ -451,7 +453,7 @@ export: bin/export
 
 clean:
 	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
-	rm -f bin/deepiri-tombstone-core deepiri-tombstone
+	rm -f bin/deepiri-tombstone-core
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
