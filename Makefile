@@ -40,6 +40,7 @@ SRC_MODELS := src/models
 SRC_CHAT   := src/chat
 SRC_COST   := src/cost
 SRC_EXPORT := src/export
+SRC_COMMON := src/common
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -293,7 +294,13 @@ bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
 	fi
 	chmod +x bin/synth
 
-bin/dashboard: $(SRC_REPORT)/dashboard.py
+# Stages are installed as standalone copies, so the shared ledger parser
+# has to sit beside them in bin/ for the import to resolve.
+bin/ledger.py: $(SRC_COMMON)/ledger.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/ledger.py bin/ledger.py
+
+bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_REPORT)/dashboard.py bin/dashboard
 	chmod +x bin/dashboard
@@ -323,7 +330,7 @@ bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
 	fi
 	chmod +x bin/jury
 
-bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh
+bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_REPLAY)/replay.py bin/replay; \
@@ -384,12 +391,12 @@ bin/chat: $(SRC_CHAT)/chat.py
 	cp $(SRC_CHAT)/chat.py bin/chat
 	chmod +x bin/chat
 
-bin/cost: $(SRC_COST)/cost.py
+bin/cost: $(SRC_COST)/cost.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_COST)/cost.py bin/cost
 	chmod +x bin/cost
 
-bin/export: $(SRC_EXPORT)/export.py
+bin/export: $(SRC_EXPORT)/export.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_EXPORT)/export.py bin/export
 	chmod +x bin/export
@@ -449,6 +456,7 @@ clean:
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
 	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export
+	rm -f bin/ledger.py
 
 dist: clean all
 
