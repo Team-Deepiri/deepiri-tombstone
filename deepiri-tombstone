@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
+SELF_DIR="$ROOT"
 if [[ ! -x "$ROOT/bin/deepiri-tombstone-core" ]]; then
   ROOT="$(cd "$ROOT/.." && pwd)"
 fi
@@ -80,6 +81,19 @@ case "$CMD" in
   export)
     exec "$ROOT/bin/export" "$ARG1" "$ARG2" "$ARG3"
     ;;
+  version|--version|-V)
+    # VERSION ships next to this script; ROOT may have walked up to the
+    # parent when bin/ has not been built yet.
+    if [[ -r "$SELF_DIR/VERSION" ]]; then
+      echo "deepiri-tombstone $(cat "$SELF_DIR/VERSION")"
+    elif [[ -r "$ROOT/VERSION" ]]; then
+      echo "deepiri-tombstone $(cat "$ROOT/VERSION")"
+    else
+      echo "deepiri-tombstone unknown" >&2
+      exit 1
+    fi
+    exit 0
+    ;;
   help|--help|-h)
     echo "deepiri-tombstone — Deepiri post-training eval harness"
     echo ""
@@ -112,6 +126,10 @@ case "$CMD" in
     echo "  chat [file]               — multi-turn chat evaluation"
     echo "  cost <action> [args]      — cost analytics"
     echo "  export <format> [output]   — export results (json/csv/md/html)"
+    echo ""
+    echo "Other commands:"
+    echo "  version                   — print the harness version"
+    echo "  help                      — show this message"
     exit 0
     ;;
   *)
