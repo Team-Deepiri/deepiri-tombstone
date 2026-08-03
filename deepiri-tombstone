@@ -41,7 +41,7 @@ case "$CMD" in
     exec "$ROOT/bin/trace" "$ARG1" "$ARG2" "$ARG3"
     ;;
   rag)
-    exec "$ROOT/bin/rag" "$ARG1" "$ARG2" "$ARG3" "$ARG3"
+    exec "$ROOT/bin/rag" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
     ;;
   jury)
     shift 3 2>/dev/null || true
