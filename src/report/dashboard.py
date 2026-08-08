@@ -21,30 +21,78 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>deepiri-tombstone Evaluation Dashboard</title>
 <style>
+:root {{
+  color-scheme: light dark;
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-elevated: #1c2128;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --heading: #58a6ff;
+  --accent-warm: #f0883e;
+  --pass: #3fb950;
+  --fail: #f85149;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, monospace;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --card-pad: clamp(14px, 2vw, 22px);
+  --fs-hero: clamp(1.6rem, 0.8rem + 3vw, 2.6rem);
+  --fs-value: clamp(24px, 2.5vw, 32px);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}}
+@media (prefers-color-scheme: light) {{
+  :root {{
+    --bg: #f6f8fa;
+    --bg-card: #ffffff;
+    --bg-elevated: #eef1f4;
+    --border: #d0d7de;
+    --text: #24292f;
+    --muted: #57606a;
+    --heading: #0969da;
+    --accent-warm: #bc4c00;
+    --pass: #1a7f37;
+    --fail: #cf222e;
+    --shadow: 0 10px 30px rgba(31, 35, 40, 0.12);
+  }}
+}}
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }}
-h1 {{ color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; }}
-h2 {{ color: #f0883e; margin: 20px 0 10px; }}
-h3 {{ color: #8b949e; margin: 15px 0 8px; }}
-.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }}
-.card {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; }}
-.card .value {{ font-size: 28px; font-weight: bold; color: #58a6ff; }}
-.card .label {{ font-size: 12px; color: #8b949e; text-transform: uppercase; margin-top: 5px; }}
-.card.pass .value {{ color: #3fb950; }}
-.card.fail .value {{ color: #f85149; }}
-table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
-th {{ background: #21262d; color: #8b949e; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; border: 1px solid #30363d; }}
-td {{ padding: 8px 12px; border: 1px solid #30363d; font-size: 13px; }}
-tr:nth-child(even) {{ background: #161b22; }}
-tr:hover {{ background: #1c2128; }}
-.pass {{ color: #3fb950; }}
-.fail {{ color: #f85149; }}
-.model-bar {{ display: flex; align-items: center; margin: 5px 0; }}
+body {{ font-family: var(--font); background: var(--bg); color: var(--text); padding: clamp(16px, 3vw, 32px); line-height: 1.55; }}
+h1 {{ color: var(--heading); border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 18px; font-size: var(--fs-hero); font-weight: 800; letter-spacing: -0.01em; }}
+h2 {{ color: var(--accent-warm); margin: 24px 0 10px; }}
+h3 {{ color: var(--muted); margin: 15px 0 8px; }}
+.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: clamp(10px, 1.5vw, 16px); margin: 20px 0; }}
+.card {{ background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--card-pad); box-shadow: var(--shadow); transition: transform .18s var(--ease), border-color .18s var(--ease); }}
+.card:hover {{ transform: translateY(-2px); border-color: var(--heading); }}
+.card .value {{ font-size: var(--fs-value); font-weight: 700; color: var(--heading); }}
+.card .label {{ font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; }}
+.card.pass .value {{ color: var(--pass); }}
+.card.fail .value {{ color: var(--fail); }}
+.table-wrap {{ overflow-x: auto; margin: 15px 0; border-radius: var(--radius); border: 1px solid var(--border); }}
+table {{ width: 100%; border-collapse: collapse; min-width: 640px; }}
+thead th {{ position: sticky; top: 0; }}
+th {{ background: var(--bg-elevated); color: var(--muted); padding: 9px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }}
+td {{ padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }}
+tr:nth-child(even) {{ background: var(--bg-card); }}
+tr:hover {{ background: var(--bg-elevated); }}
+.pass {{ color: var(--pass); }}
+.fail {{ color: var(--fail); }}
+.model-bar {{ display: flex; align-items: center; margin: 6px 0; }}
 .model-name {{ width: 150px; font-size: 13px; }}
-.model-bar-fill {{ height: 20px; border-radius: 4px; margin-left: 10px; min-width: 4px; }}
-.model-pct {{ margin-left: 10px; font-size: 12px; }}
-.footer {{ margin-top: 30px; padding-top: 10px; border-top: 1px solid #30363d; font-size: 11px; color: #484f58; }}
-pre {{ background: #161b22; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 12px; }}
+.model-bar-fill {{ height: 20px; border-radius: 4px; margin-left: 10px; min-width: 4px; animation: grow .8s var(--ease) both; transform-origin: left; }}
+@keyframes grow {{ from {{ transform: scaleX(0); }} to {{ transform: scaleX(1); }} }}
+.model-pct {{ margin-left: 10px; font-size: 12px; color: var(--muted); min-width: 48px; }}
+.footer {{ margin-top: 32px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }}
+pre {{ background: var(--bg-card); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; font-size: 12px; }}
+@media (prefers-reduced-motion: reduce) {{
+  *, *::before, *::after {{ animation: none !important; transition: none !important; }}
+}}
+@media print {{
+  .table-wrap table {{ min-width: 0; }}
+  thead th {{ position: static; }}
+  .card, body, .footer {{ box-shadow: none; }}
+}}
 </style>
 </head>
 <body>
@@ -124,11 +172,11 @@ def build_model_comparison(summary):
 def build_results_table(entries, title="Results"):
     if not entries:
         return ""
-    table = f"<h2>{title}</h2><table><tr><th>Run</th><th>Model</th><th>Prompt</th><th>Response</th><th>Latency</th><th>Status</th></tr>"
+    table = f"<h2>{title}</h2><div class='table-wrap'><table><tr><th>Run</th><th>Model</th><th>Prompt</th><th>Response</th><th>Latency</th><th>Status</th></tr>"
     for e in entries[-50:]:
         status_class = "pass" if e["status"] == "PASS" else "fail"
         table += f"<tr><td>{e['run_id']}</td><td>{e['model']}</td><td>{e['prompt']}</td><td>{e['response']}</td><td>{e['latency']}ms</td><td class='{status_class}'>{e['status']}</td></tr>"
-    table += "</table>"
+    table += "</table></div>"
     return table
 
 def build_benchmark_section(bench_path):
