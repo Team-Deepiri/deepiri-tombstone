@@ -59,18 +59,26 @@ def export_html(entries, stats, output):
     for e in entries[-30:]:
         cls = "pass" if e["status"] == "PASS" else "fail"
         rows += f"<tr class='{cls}'><td>{e['run_id']}</td><td>{e['model']}</td><td>{e['prompt'][:50]}</td><td>{e['latency_ms']}ms</td><td>{e['status']}</td></tr>\n"
-    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>deepiri-tombstone Export</title>
-<style>body{{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}}
-h1{{color:#58a6ff}}table{{width:100%;border-collapse:collapse}}
-th{{background:#21262d;color:#8b949e;padding:8px;text-align:left;border:1px solid #30363d;font-size:12px}}
-td{{padding:8px;border:1px solid #30363d;font-size:13px}}
-tr:nth-child(even){{background:#161b22}}
-.pass td:nth-child(5){{color:#3fb950}}
-.fail td:nth-child(5){{color:#f85149}}
-.summary{{display:flex;gap:20px;margin:20px 0}}
-.card{{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:15px}}
-.card .val{{font-size:24px;font-weight:bold;color:#58a6ff}}
-.card .lbl{{font-size:11px;color:#8b949e}}
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>deepiri-tombstone Export</title>
+<style>
+:root{{color-scheme:light dark;--bg:#0d1117;--card:#161b22;--elevated:#1c2128;--border:#30363d;--text:#c9d1d9;--muted:#8b949e;--heading:#58a6ff;--pass:#3fb950;--fail:#f85149;--radius:10px}}
+@media (prefers-color-scheme: light){{:root{{--bg:#f6f8fa;--card:#fff;--elevated:#eef1f4;--border:#d0d7de;--text:#24292f;--muted:#57606a;--heading:#0969da;--pass:#1a7f37;--fail:#cf222e}}}}
+body{{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text);padding:clamp(16px,3vw,32px);line-height:1.55}}
+h1{{color:var(--heading);border-bottom:1px solid var(--border);padding-bottom:12px;font-size:clamp(1.4rem,1rem+2vw,2rem)}}
+.summary{{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:20px 0}}
+.card{{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px;box-shadow:0 8px 24px rgba(0,0,0,.25)}}
+.card .val{{font-size:clamp(22px,3vw,28px);font-weight:700;color:var(--heading)}}
+.card .lbl{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}}
+.table-wrap{{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}}
+table{{width:100%;border-collapse:collapse;min-width:520px}}
+th{{background:var(--elevated);color:var(--muted);padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.05em}}
+td{{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13px}}
+tr:nth-child(even){{background:var(--card)}}
+tr:hover{{background:var(--elevated)}}
+.pass td:nth-child(5){{color:var(--pass);font-weight:600}}
+.fail td:nth-child(5){{color:var(--fail);font-weight:600}}
+@media (prefers-reduced-motion: reduce){{*{{transition:none}}}}
+@media print{{.summary{{grid-template-columns:repeat(4,1fr)}}.table-wrap{{border:none}}.card{{box-shadow:none}}}}
 </style></head><body>
 <h1>deepiri-tombstone Export</h1>
 <p>Generated: {datetime.now().isoformat()}</p>
@@ -80,8 +88,8 @@ tr:nth-child(even){{background:#161b22}}
 <div class="card"><div class="val">{passes}</div><div class="lbl">Passed</div></div>
 <div class="card"><div class="val">{len(entries) - passes}</div><div class="lbl">Failed</div></div>
 </div>
-<table><tr><th>Run ID</th><th>Model</th><th>Prompt</th><th>Latency</th><th>Status</th></tr>
-{rows}</table></body></html>"""
+<div class="table-wrap"><table><tr><th>Run ID</th><th>Model</th><th>Prompt</th><th>Latency</th><th>Status</th></tr>
+{rows}</table></div></body></html>"""
     if output:
         with open(output, 'w') as f:
             f.write(html)
