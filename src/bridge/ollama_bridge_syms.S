@@ -25,6 +25,8 @@
     .set b.ollama_generate,ollama_generate
     .globl b.ollama_chat
     .set b.ollama_chat,ollama_chat
+    .globl b.ollama_warm
+    .set b.ollama_warm,ollama_warm
     .globl b.run_filter
     .set b.run_filter,run_filter
     .globl b.system_cmd
@@ -35,6 +37,8 @@
     .set b.fixture_next,fixture_next
     .globl b.fixture_close
     .set b.fixture_close,fixture_close
+    .globl b.fixture_count
+    .set b.fixture_count,fixture_count
     .globl b.format_audit
     .set b.format_audit,format_audit
     .globl b.run_score
@@ -51,4 +55,36 @@
     .set b.ollama_models,ollama_models
     .globl b.fixture_category
     .set b.fixture_category,fixture_category
+    .globl b.parse_response_json
+    .set b.parse_response_json,parse_response_json
+    .globl b.itoa_buf
+    .set b.itoa_buf,itoa_buf
+    .globl b.stats_reset
+    .set b.stats_reset,stats_reset
+    .globl b.stats_record
+    .set b.stats_record,stats_record
+    .globl b.stats_total
+    .set b.stats_total,stats_total
+    .globl b.stats_pass
+    .set b.stats_pass,stats_pass
+    .globl b.stats_fail
+    .set b.stats_fail,stats_fail
+    .globl b.stats_cache_hits
+    .set b.stats_cache_hits,stats_cache_hits
+    .globl b.stats_mean_latency
+    .set b.stats_mean_latency,stats_mean_latency
+    .globl b.stats_pass_rate
+    .set b.stats_pass_rate,stats_pass_rate
+    .globl b.ledger_queue
+    .set b.ledger_queue,ledger_queue
+    .globl b.ledger_flush
+    .set b.ledger_flush,ledger_flush
+    .globl b.write_summary
+    .set b.write_summary,write_summary
+    .globl b.append_stats_line
+    .set b.append_stats_line,append_stats_line
+    .globl b.last_cache_hit
+    .set b.last_cache_hit,last_cache_hit
+    .globl b.num_buf
+    .set b.num_buf,num_buf
 #endif

@@ -3,13 +3,17 @@
 ## Unreleased
 
 ### Added
+- **Classic B castle**: keep-alive libcurl bridge (no per-prompt `curl` fork),
+  in-process JSON extract + word tokenize, response cache, batched ledger flush,
+  running stats, model warm-up, fail-fast (`DEEPIRI_TOMBSTONE_FAIL_FAST`), and
+  B commands `models` / `warm` / `summary`.
 - Keep-alive Ollama HTTP client (`src/common/ollama_client.py`) shared by
   runner, bench, and jury — no per-call `curl` process fork on the hot path.
 - Content-addressed response cache under `reports/cache/` (disable with
   `--no-cache` or `DEEPIRI_TOMBSTONE_NO_CACHE=1`).
 - Batched ledger/stats writers (`ledger.append_batch`, `append_stats_batch`).
 - `eval` now defaults to the parallel runner (`-j`, cache, `--ledger`);
-  vintage B→Forth→AWK→Fortran→COBOL path is `eval --classic`.
+  vintage B path is `eval --classic` (now also keep-alive + cache + batch).
 - Parallel prompt fan-out for `bench` (`-j`) using the shared client.
 
 ### Fixed

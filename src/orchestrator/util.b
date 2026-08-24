@@ -1,4 +1,4 @@
-/* util.b — string helpers for deepiri-tombstone */
+/* util.b — string + number helpers for deepiri-tombstone B core */
 
 str_eq(a, b) {
     auto i, ca, cb;
@@ -36,6 +36,26 @@ str_copy_b(dst, src, max) {
     return(dst);
 }
 
+str_startswith(s, prefix) {
+    auto i, c, p;
+    i = 0;
+    while (1) {
+        p = char(prefix, i);
+        if (p == 0)
+            return(1);
+        c = char(s, i);
+        if (c != p)
+            return(0);
+        i = i + 1;
+    }
+}
+
+tolower_ch(c) {
+    if (c >= 65 & c <= 90)
+        return(c + 32);
+    return(c);
+}
+
 default_model(buf) {
     getenv_str("DEEPIRI_TOMBSTONE_MODEL", buf, 256);
     if (str_len_b(buf) == 0)
@@ -45,4 +65,11 @@ default_model(buf) {
 
 make_run_id(buf) {
     return(format_run_id(buf, 64));
+}
+
+print_num(n) {
+    auto b;
+    b = num_buf();
+    itoa_buf(n, b, 64);
+    printf("%s", b);
 }

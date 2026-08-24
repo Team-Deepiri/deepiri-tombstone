@@ -13,7 +13,7 @@ ARG2="${3:-}"
 ARG3="${4:-}"
 
 case "$CMD" in
-  ping|ask)
+  ping|ask|models|warm|summary)
     export DEEPIRI_TOMBSTONE_CMD="$CMD"
     export DEEPIRI_TOMBSTONE_ARG1="$ARG1"
     export DEEPIRI_TOMBSTONE_ARG2="$ARG2"
@@ -165,12 +165,15 @@ case "$CMD" in
     echo "deepiri-tombstone — Deepiri post-training eval harness"
     echo ""
     echo "Core commands:"
-    echo "  ping                      — check Ollama connectivity"
-    echo "  ask <model> <prompt>      — single prompt evaluation"
+    echo "  ping                      — check Ollama connectivity (B keep-alive bridge)"
+    echo "  models                    — list Ollama models (B core)"
+    echo "  warm [model]              — preload model into VRAM (B core)"
+    echo "  ask <model> <prompt>      — single prompt evaluation (B core)"
+    echo "  summary                   — print classic-eval running stats"
     echo "  eval [model] [fixture] [-j N] [-o file] [--no-cache]"
     echo "                            — fast parallel eval (keep-alive + cache + ledger)"
     echo "  eval --classic [model] [fixture]"
-    echo "                            — vintage B→Forth→AWK→Fortran→COBOL pipeline"
+    echo "                            — B core: keep-alive+cache+batch ledger+warm+fail-fast"
     echo ""
     echo "Advanced evaluation commands:"
     echo "  judge <model> <prompt> [response] [criteria]"

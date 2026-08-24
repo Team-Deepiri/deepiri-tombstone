@@ -192,17 +192,22 @@ vendor/llvm/usr/bin/clang-18:
 	@exit 1
 
 B_BRIDGE_FUNCS := get_cmd get_arg1 get_arg2 format_run_id str_len str_copy getenv_str \
-	time_ms read_file write_file ollama_ping ollama_generate ollama_chat run_filter \
-	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_score_args run_tokenize \
+	time_ms read_file write_file ollama_ping ollama_generate ollama_chat ollama_warm run_filter \
+	system_cmd fixture_open fixture_next fixture_close fixture_count format_audit \
+	run_score run_score_args run_tokenize \
 	resp_buf parsed_buf prompt_buf keyword_buf audit_buf runid_buf status_buf model_buf \
-	fixture_buf cmd_buf arg1_buf arg2_buf set_retry_count ollama_retry_generate ollama_models fixture_category
+	fixture_buf cmd_buf arg1_buf arg2_buf num_buf set_retry_count ollama_retry_generate \
+	ollama_models fixture_category parse_response_json itoa_buf \
+	stats_reset stats_record stats_total stats_pass stats_fail stats_cache_hits \
+	stats_mean_latency stats_pass_rate ledger_queue ledger_flush write_summary \
+	append_stats_line last_cache_hit
 B_DEFSYMS := $(foreach fn,$(B_BRIDGE_FUNCS),-Wl,--defsym=b.$(fn)=$(fn))
 
 deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/clang-18
 	@mkdir -p bin
 	@command -v $(BLANG) >/dev/null || { echo "install blang first: ./setup.sh"; exit 1; }
 	$(BLANG) combined.b --emit-llvm -o combined.ll
-	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
+	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -lcurl -o bin/deepiri-tombstone-core
 
 # ./deepiri-tombstone is the checked-in dispatcher and is not generated.
 # scripts/run-b.sh only reaches the B core (ping/ask/eval); copying it over

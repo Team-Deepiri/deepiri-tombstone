@@ -57,7 +57,7 @@ fi
 # Every command advertised by help should have a dispatch arm.
 for cmd in ping ask eval judge mutate bench synth dashboard trace rag jury \
            replay runner checkpoint stats guard api notify registry chat \
-           cost export version help; do
+           cost export version help models warm summary; do
   if grep -qE "^  ([a-z|_-]*\|)?${cmd}[|)]" "$CLI"; then
     echo "  PASS: dispatch arm exists for '$cmd'"
   else

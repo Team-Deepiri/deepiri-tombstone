@@ -36,10 +36,13 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 
 | Command | Description |
 |---------|-------------|
-| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` |
-| `ask <model> <prompt>` | Single spot-check |
+| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` (B keep-alive bridge) |
+| `models` | List Ollama models (B core) |
+| `warm [model]` | Preload model into VRAM (B core) |
+| `ask <model> <prompt>` | Single spot-check (B core) |
+| `summary` | Print classic-eval running stats |
 | `eval [model] [fixture] [-j N]` | Fast parallel eval (keep-alive HTTP, cache, batched ledger) |
-| `eval --classic [model] [fixture]` | Vintage B→Forth→AWK→Fortran→COBOL pipeline |
+| `eval --classic [model] [fixture]` | B core: keep-alive + cache + batch ledger + warm + fail-fast |
 | `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
 | `mutate <fixture>` | Adversarial prompt mutation |
 | `bench <fixture> <model>...` | Multi-model benchmark comparison |
