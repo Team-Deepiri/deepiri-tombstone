@@ -69,3 +69,68 @@ def load_stats(path):
                     "pass": parts[2],
                 })
     return stats
+
+
+def _flat(value):
+    """Collapse newlines so one logical row stays one physical line."""
+    if value is None:
+        return ""
+    return str(value).replace("\r", " ").replace("\n", " ")
+
+
+def format_line(run_id, model, prompt, response, latency_ms, status):
+    """Serialize one ledger row. Pipes inside prompt are recoverable by parse_line."""
+    return "|".join([
+        _flat(run_id),
+        _flat(model),
+        _flat(prompt),
+        _flat(response),
+        _flat(latency_ms),
+        _flat(status),
+    ])
+
+
+def append_batch(path, rows, mode="a"):
+    """Append many ledger rows in one open/write/close. rows are dicts or 6-tuples."""
+    if not rows:
+        return 0
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    lines = []
+    for row in rows:
+        if isinstance(row, dict):
+            line = format_line(
+                row.get("run_id", ""),
+                row.get("model", ""),
+                row.get("prompt", ""),
+                row.get("response", ""),
+                row.get("latency_ms", ""),
+                row.get("status", ""),
+            )
+        else:
+            line = format_line(*row)
+        lines.append(line)
+    with open(path, mode, encoding="utf-8") as f:
+        f.write("\n".join(lines))
+        f.write("\n")
+    return len(lines)
+
+
+def append_stats_batch(path, rows, mode="a"):
+    """Append stats.dat rows: (latency_ms, length, pass_flag)."""
+    if not rows:
+        return 0
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, mode, encoding="utf-8") as f:
+        for row in rows:
+            if isinstance(row, dict):
+                lat = row.get("latency_ms", 0)
+                length = row.get("length", 0)
+                passed = row.get("pass", 0)
+            else:
+                lat, length, passed = row[0], row[1], row[2]
+            f.write(f"{lat} {length} {int(passed)}\n")
+    return len(rows)

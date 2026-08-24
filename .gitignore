@@ -6,6 +6,7 @@ combined.ll
 *.bc
 reports/*
 !reports/.gitkeep
+reports/cache/
 .bcplroot/
 vendor/
 !vendor/libb.a

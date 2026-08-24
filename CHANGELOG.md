@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+- Keep-alive Ollama HTTP client (`src/common/ollama_client.py`) shared by
+  runner, bench, and jury — no per-call `curl` process fork on the hot path.
+- Content-addressed response cache under `reports/cache/` (disable with
+  `--no-cache` or `DEEPIRI_TOMBSTONE_NO_CACHE=1`).
+- Batched ledger/stats writers (`ledger.append_batch`, `append_stats_batch`).
+- `eval` now defaults to the parallel runner (`-j`, cache, `--ledger`);
+  vintage B→Forth→AWK→Fortran→COBOL path is `eval --classic`.
+- Parallel prompt fan-out for `bench` (`-j`) using the shared client.
+
 ### Fixed
 - Ledger rows whose prompt contained a `|` silently reported the latency as the
   status and the response as the latency, in every consumer. Fields are now
@@ -17,7 +27,7 @@
   `tests/`; both now discover them. The cost and export suites depended on a
   ledger written by the dashboard suite and now build their own.
 
-### Added
+### Added (earlier)
 - `version` command (and `--version`/`-V`) reporting the VERSION file.
 - Test suites for CLI dispatch and the shared ledger parser.
 - B-language orchestrator with `ping`, `ask`, `eval` commands

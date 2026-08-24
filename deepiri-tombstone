@@ -13,11 +13,78 @@ ARG2="${3:-}"
 ARG3="${4:-}"
 
 case "$CMD" in
-  ping|ask|eval)
+  ping|ask)
     export DEEPIRI_TOMBSTONE_CMD="$CMD"
     export DEEPIRI_TOMBSTONE_ARG1="$ARG1"
     export DEEPIRI_TOMBSTONE_ARG2="$ARG2"
     exec "$ROOT/bin/deepiri-tombstone-core"
+    ;;
+  eval)
+    # Fast path: parallel keep-alive runner + cache + batched ledger.
+    # Museum / classic B→Forth→AWK→Fortran→COBOL path: --classic
+    shift
+    classic=0
+    model=""
+    fixture=""
+    jobs="${DEEPIRI_TOMBSTONE_JOBS:-4}"
+    out=""
+    no_cache=0
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --classic)
+          classic=1
+          shift
+          ;;
+        -j|--jobs)
+          jobs="${2:?eval: -j requires a value}"
+          shift 2
+          ;;
+        -o|--output)
+          out="${2:?eval: -o requires a path}"
+          shift 2
+          ;;
+        --no-cache)
+          no_cache=1
+          shift
+          ;;
+        -h|--help)
+          echo "Usage: deepiri-tombstone eval [--classic] [model] [fixture] [-j N] [-o file] [--no-cache]"
+          exit 0
+          ;;
+        -*)
+          echo "Unknown eval flag: $1" >&2
+          echo "Try: deepiri-tombstone eval --help" >&2
+          exit 1
+          ;;
+        *)
+          if [[ -z "$model" ]]; then
+            model="$1"
+          elif [[ -z "$fixture" ]]; then
+            fixture="$1"
+          else
+            echo "Unexpected argument: $1" >&2
+            exit 1
+          fi
+          shift
+          ;;
+      esac
+    done
+    model="${model:-${DEEPIRI_TOMBSTONE_MODEL:-llama3.2}}"
+    fixture="${fixture:-fixtures/eval_prompts.txt}"
+    if [[ "$classic" -eq 1 ]]; then
+      export DEEPIRI_TOMBSTONE_CMD=eval
+      export DEEPIRI_TOMBSTONE_ARG1="$model"
+      export DEEPIRI_TOMBSTONE_ARG2="$fixture"
+      exec "$ROOT/bin/deepiri-tombstone-core"
+    fi
+    runner_args=("$fixture" -m "$model" -j "$jobs" --ledger)
+    if [[ -n "$out" ]]; then
+      runner_args+=(-o "$out")
+    fi
+    if [[ "$no_cache" -eq 1 ]]; then
+      runner_args+=(--no-cache)
+    fi
+    exec "$ROOT/bin/runner" "${runner_args[@]}"
     ;;
   judge)
     exec "$ROOT/bin/judge" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
@@ -100,13 +167,16 @@ case "$CMD" in
     echo "Core commands:"
     echo "  ping                      — check Ollama connectivity"
     echo "  ask <model> <prompt>      — single prompt evaluation"
-    echo "  eval [model] [fixture]    — batch evaluation from fixture"
+    echo "  eval [model] [fixture] [-j N] [-o file] [--no-cache]"
+    echo "                            — fast parallel eval (keep-alive + cache + ledger)"
+    echo "  eval --classic [model] [fixture]"
+    echo "                            — vintage B→Forth→AWK→Fortran→COBOL pipeline"
     echo ""
     echo "Advanced evaluation commands:"
     echo "  judge <model> <prompt> [response] [criteria]"
     echo "                            — G-Eval LLM-as-a-Judge scoring"
     echo "  mutate <fixture>          — adversarial prompt mutation"
-    echo "  bench <fixture> <model>... — multi-model benchmark"
+    echo "  bench <fixture> <model>... [-j N] — multi-model benchmark (parallel)"
     echo "  synth <seed> [count]      — synthetic dataset generation"
     echo "  dashboard                 — generate HTML report"
     echo "  trace [start|view] [file] — span tracing"
@@ -116,7 +186,7 @@ case "$CMD" in
     echo "  jury <prompt> <response> [jurors...]"
     echo "                            — multi-juror consensus panel"
     echo "  replay [ledger] [model]   — replay evaluations from ledger"
-    echo "  runner <fixture>          — parallel eval runner"
+    echo "  runner <fixture> [-j N]   — parallel eval runner (also used by eval)"
     echo "  checkpoint <action>       — eval checkpoint/resume"
     echo "  stats [file]              — statistical analysis"
     echo "  guard <check> <text>      — safety & jailbreak detection"

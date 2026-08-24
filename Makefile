@@ -278,7 +278,7 @@ bin/mutate: $(SRC_MUTATE)/mutate.py $(SRC_MUTATE)/fallback.sh
 	fi
 	chmod +x bin/mutate
 
-bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh
+bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_BENCH)/bench.py bin/bench; \
@@ -296,11 +296,15 @@ bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
 	fi
 	chmod +x bin/synth
 
-# Stages are installed as standalone copies, so the shared ledger parser
-# has to sit beside them in bin/ for the import to resolve.
+# Stages are installed as standalone copies, so shared helpers have to sit
+# beside them in bin/ for imports to resolve.
 bin/ledger.py: $(SRC_COMMON)/ledger.py
 	@mkdir -p bin
 	cp $(SRC_COMMON)/ledger.py bin/ledger.py
+
+bin/ollama_client.py: $(SRC_COMMON)/ollama_client.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/ollama_client.py bin/ollama_client.py
 
 bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py
 	@mkdir -p bin
@@ -323,7 +327,7 @@ bin/rag: $(SRC_RAG)/rag.py $(SRC_RAG)/fallback.sh
 	fi
 	chmod +x bin/rag
 
-bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
+bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_JURY)/jury.py bin/jury; \
@@ -341,7 +345,7 @@ bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py
 	fi
 	chmod +x bin/replay
 
-bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh
+bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_RUNNER)/runner.py bin/runner; \
@@ -458,7 +462,7 @@ clean:
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
 	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export
-	rm -f bin/ledger.py
+	rm -f bin/ledger.py bin/ollama_client.py
 
 dist: clean all
 

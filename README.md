@@ -38,7 +38,8 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 |---------|-------------|
 | `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` |
 | `ask <model> <prompt>` | Single spot-check |
-| `eval [model] [fixture]` | Run fixture suite |
+| `eval [model] [fixture] [-j N]` | Fast parallel eval (keep-alive HTTP, cache, batched ledger) |
+| `eval --classic [model] [fixture]` | Vintage B→Forth→AWK→Fortran→COBOL pipeline |
 | `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
 | `mutate <fixture>` | Adversarial prompt mutation |
 | `bench <fixture> <model>...` | Multi-model benchmark comparison |
@@ -55,6 +56,9 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 |----------|---------|---------|
 | `DEEPIRI_TOMBSTONE_MODEL` | `llama3.2` | Default model |
 | `DEEPIRI_TOMBSTONE_HOST` | `127.0.0.1:11434` | Ollama host |
+| `DEEPIRI_TOMBSTONE_JOBS` | `4` | Parallel workers for `eval` / `runner` / `bench` |
+| `DEEPIRI_TOMBSTONE_CACHE_DIR` | `reports/cache` | Response cache directory |
+| `DEEPIRI_TOMBSTONE_NO_CACHE` | (unset) | Set to `1` to disable response cache |
 
 ## Advanced features
 
