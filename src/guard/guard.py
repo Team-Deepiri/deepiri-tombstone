@@ -3,16 +3,18 @@
 Guardrails & Safety Evaluation for deepiri-tombstone.
 Jailbreak detection, content safety, toxicity scoring.
 """
-import json, sys, os, subprocess, argparse, re
+import json, sys, os, argparse, re
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
+        sys.path.insert(0, _cand)
+        break
+from ollama_client import OllamaClient  # noqa: E402
 
 def call_ollama(model, prompt, host):
-    payload = json.dumps({"model": model, "prompt": prompt, "stream": False})
-    try:
-        r = subprocess.run(["curl", "-sf", "--max-time", "30", f"http://{host}/api/generate", "-d", payload],
-                          capture_output=True, text=True, timeout=35)
-        if r.returncode != 0: return None
-        return json.loads(r.stdout).get("response", "")
-    except: return None
+    text, _, err, _ = OllamaClient(host=host).generate(model, prompt, use_cache=True)
+    return None if err else text
 
 def check_jailbreak(prompt, model, host):
     """Check if a prompt is a jailbreak attempt"""

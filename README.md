@@ -8,12 +8,16 @@
 
 ```bash
 ./setup.sh
+./deepiri-tombstone doctor
 ./deepiri-tombstone ping
-./deepiri-tombstone ask llama3.2 "Say hello in one word"
-./deepiri-tombstone eval llama3.2
+./deepiri-tombstone eval llama3.2 -j 8
+./deepiri-tombstone eval --classic llama3.2   # B keep-alive castle
+./deepiri-tombstone dashboard
 ```
 
-`./setup.sh` installs build deps, compiles the project, starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a ping smoke test.
+`./setup.sh` installs build deps (including libcurl), compiles the project,
+starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a
+ping smoke test. `doctor` confirms the install is evaluation-ready.
 
 ## Source layout
 
@@ -50,6 +54,7 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 | `dashboard` | Generate HTML evaluation report |
 | `trace [start\|view] [file]` | Span tracing & observability |
 | `rag <metric> <question> <answer> [context]` | RAG metrics — pass the retrieved context as the 4th argument |
+| `doctor` | Verify toolchain, B bridge, Ollama, fixtures |
 | `version` | Print the harness version |
 | `help` | Show full usage |
 

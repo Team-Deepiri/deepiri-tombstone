@@ -161,6 +161,9 @@ case "$CMD" in
     fi
     exit 0
     ;;
+  doctor)
+    exec "$ROOT/bin/doctor"
+    ;;
   help|--help|-h)
     echo "deepiri-tombstone — Deepiri post-training eval harness"
     echo ""
@@ -201,6 +204,7 @@ case "$CMD" in
     echo "  export <format> [output]   — export results (json/csv/md/html)"
     echo ""
     echo "Other commands:"
+    echo "  doctor                    — verify toolchain, bridge, Ollama, fixtures"
     echo "  version                   — print the harness version"
     echo "  help                      — show this message"
     exit 0

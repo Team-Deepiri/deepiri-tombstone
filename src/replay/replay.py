@@ -3,33 +3,28 @@
 Production Replay Engine for deepiri-tombstone.
 Re-runs evaluations from audit ledger and compares results across runs.
 """
-import json, sys, os, subprocess, argparse, time
+import json, sys, os, argparse
 from datetime import datetime
 
 # Installed beside this script in bin/, or under src/common/ when run in tree.
 _HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "..", "src", "common")):
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
     if os.path.exists(os.path.join(_cand, "ledger.py")):
         sys.path.insert(0, _cand)
         break
 from ledger import load_ledger as parse_ledger
+from ollama_client import OllamaClient  # noqa: E402
 
-def replay_entry(entry, model, host):
+
+def replay_entry(entry, model, host, client=None):
     """Re-run a single prompt/response evaluation"""
     prompt = entry["prompt"]
-    payload = json.dumps({"model": model, "prompt": prompt, "stream": False})
-    start = time.time()
-    try:
-        r = subprocess.run(["curl", "-sf", "--max-time", "60", f"http://{host}/api/generate", "-d", payload],
-                          capture_output=True, text=True, timeout=70)
-        elapsed = int((time.time() - start) * 1000)
-        if r.returncode != 0:
-            return {"prompt": prompt, "error": f"curl {r.returncode}", "latency_ms": elapsed, "pass": False}
-        resp = json.loads(r.stdout).get("response", "")
-        passed = entry["status"] == "PASS"
-        return {"prompt": prompt, "response": resp[:200], "latency_ms": elapsed, "pass": passed}
-    except Exception as e:
-        return {"prompt": prompt, "error": str(e), "latency_ms": 0, "pass": False}
+    client = client or OllamaClient(host=host)
+    resp, elapsed, err, _ = client.generate(model, prompt, use_cache=True)
+    if err:
+        return {"prompt": prompt, "error": err, "latency_ms": elapsed, "pass": False}
+    passed = entry["status"] == "PASS"
+    return {"prompt": prompt, "response": (resp or "")[:200], "latency_ms": elapsed, "pass": passed}
 
 def compare_runs(original, replayed):
     changes = []
@@ -62,10 +57,12 @@ def main():
     if args.count > 0:
         entries = entries[:args.count]
     print(f"Replaying {len(entries)} entries with model={model}...", file=sys.stderr)
+    client = OllamaClient(host=host)
     results = []
     for i, e in enumerate(entries):
         print(f"  [{i+1}/{len(entries)}] {e['prompt'][:50]}...", file=sys.stderr)
-        results.append(replay_entry(e, model, host))
+        results.append(replay_entry(e, model, host, client))
+    client.close()
     output = {
         "timestamp": datetime.now().isoformat(),
         "model": model,

@@ -6,7 +6,7 @@ WORKDIR /src
 
 RUN apt-get update -qq && apt-get install -y -qq \
     curl jq gcc gforth gnucobol gfortran python3 make binutils xz-utils \
-    clang-18 llvm-18-linker-tools \
+    clang-18 llvm-18-linker-tools libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
@@ -31,7 +31,7 @@ FROM $BASE AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-    curl jq gforth perl gawk python3 ca-certificates zstd \
+    curl jq gforth perl gawk python3 ca-certificates zstd libcurl4 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/deepiri-tombstone

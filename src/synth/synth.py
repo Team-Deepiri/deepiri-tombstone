@@ -3,8 +3,15 @@
 Synthetic Dataset Generator for deepiri-tombstone.
 Expands seed prompts into larger test sets using Ollama.
 """
-import json, sys, os, subprocess, random, argparse, re
+import json, sys, os, random, argparse, re
 from datetime import datetime
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
+        sys.path.insert(0, _cand)
+        break
+from ollama_client import OllamaClient  # noqa: E402
 
 random.seed(42)
 
@@ -35,17 +42,10 @@ VARIANT: <variant prompt> | KEYWORD: <expected keyword>
 
 Make variants diverse: change the question format, add context, rephrase, or adjust difficulty."""
 
-    payload = json.dumps({"model": model, "prompt": system_prompt, "stream": False})
     try:
-        result = subprocess.run(
-            ["curl", "-sf", "--max-time", "60", f"http://{host}/api/generate", "-d", payload],
-            capture_output=True, text=True, timeout=70
-        )
-        if result.returncode != 0:
+        raw, _, err, _ = OllamaClient(host=host).generate(model, system_prompt, use_cache=True)
+        if err or not raw:
             return []
-
-        resp_data = json.loads(result.stdout)
-        raw = resp_data.get("response", "")
 
         variants = []
         for line in raw.split('\n'):
@@ -65,7 +65,7 @@ Make variants diverse: change the question format, add context, rephrase, or adj
                     variants.append((p, k))
 
         return variants[:count]
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception):
+    except Exception:
         return []
 
 def generate_rule_based(seed_prompt, seed_keyword, count):

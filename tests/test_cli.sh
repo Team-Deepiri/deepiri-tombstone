@@ -57,7 +57,7 @@ fi
 # Every command advertised by help should have a dispatch arm.
 for cmd in ping ask eval judge mutate bench synth dashboard trace rag jury \
            replay runner checkpoint stats guard api notify registry chat \
-           cost export version help models warm summary; do
+           cost export version help models warm summary doctor; do
   if grep -qE "^  ([a-z|_-]*\|)?${cmd}[|)]" "$CLI"; then
     echo "  PASS: dispatch arm exists for '$cmd'"
   else
@@ -65,6 +65,8 @@ for cmd in ping ask eval judge mutate bench synth dashboard trace rag jury \
     errors=$((errors + 1))
   fi
 done
+
+test_cli "help lists doctor" "doctor" "$CLI" help
 
 echo ""
 if [[ "$errors" -eq 0 ]]; then echo "ALL CLI TESTS PASSED"

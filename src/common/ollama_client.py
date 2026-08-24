@@ -29,16 +29,17 @@ def cache_dir() -> str:
     root = os.environ.get("DEEPIRI_TOMBSTONE_CACHE_DIR")
     if root:
         return root
-    # Prefer reports/cache beside the repo when run from source or bin/.
     here = os.path.dirname(os.path.abspath(__file__))
-    for cand in (
-        os.path.join(here, "..", "..", "reports", "cache"),
-        os.path.join(here, "..", "reports", "cache"),
+    candidates = [
+        os.path.join(here, "..", "reports", "cache"),       # bin/ → ../reports
+        os.path.join(here, "..", "..", "reports", "cache"), # src/common → ../../reports
         os.path.join("reports", "cache"),
-    ):
-        parent = os.path.dirname(os.path.abspath(cand))
-        if os.path.isdir(parent) or parent.endswith("reports"):
-            return os.path.abspath(cand)
+    ]
+    for cand in candidates:
+        abs_cand = os.path.abspath(cand)
+        parent = os.path.dirname(abs_cand)
+        if os.path.isdir(parent):
+            return abs_cand
     return os.path.abspath(os.path.join("reports", "cache"))
 
 
@@ -215,5 +216,59 @@ class OllamaClient:
                 self.errors += 1
             return None, elapsed_ms, str(e), False
 
+    def chat(
+        self,
+        model: str,
+        messages: list,
+        *,
+        use_cache: bool = False,
+    ) -> Tuple[Optional[str], int, Optional[str]]:
+        """Chat API. Returns (content, latency_ms, error)."""
+        payload = json.dumps(
+            {"model": model, "messages": messages, "stream": False}
+        ).encode("utf-8")
+        start = time.monotonic()
+        try:
+            status, data = self.request("POST", "/api/chat", payload)
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            if status != 200:
+                return None, elapsed_ms, f"http {status}"
+            parsed = json.loads(data.decode("utf-8"))
+            content = (parsed.get("message") or {}).get("content", "")
+            return content, elapsed_ms, None
+        except Exception as e:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            return None, elapsed_ms, str(e)
+
+    def tags(self) -> Tuple[Optional[dict], Optional[str]]:
+        """Return /api/tags JSON or (None, error)."""
+        try:
+            status, data = self.request("GET", "/api/tags")
+            if status != 200:
+                return None, f"http {status}"
+            return json.loads(data.decode("utf-8")), None
+        except Exception as e:
+            return None, str(e)
+
     def close(self) -> None:
         self._reset()
+
+
+def _common_dirs():
+    here = os.path.dirname(os.path.abspath(__file__))
+    return (
+        here,
+        os.path.join(here, "..", "common"),
+        os.path.join(here, "..", "..", "src", "common"),
+    )
+
+
+def ensure_common_path():
+    """Insert src/common or bin/ onto sys.path for sibling imports."""
+    import sys
+    for cand in _common_dirs():
+        if os.path.exists(os.path.join(cand, "ollama_client.py")):
+            if cand not in sys.path:
+                sys.path.insert(0, cand)
+            return cand
+    return None
