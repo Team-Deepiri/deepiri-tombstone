@@ -99,13 +99,14 @@ for cmd in models warm summary; do
   fi
 done
 
-if "$CLI" help 2>&1 | grep -qi "warm"; then
+cli_help=$("$CLI" help 2>&1 || true)
+if echo "$cli_help" | grep -qi "warm"; then
   pass "help lists warm"
 else
   fail "help lists warm"
 fi
 
-if grep -q "keep-alive+cache+batch" "$CLI" || "$CLI" help 2>&1 | grep -qi "fail-fast\|keep-alive"; then
+if echo "$cli_help" | grep -qi "keep-alive"; then
   pass "help/classic path documents keep-alive bridge"
 else
   fail "help/classic path documents keep-alive bridge"

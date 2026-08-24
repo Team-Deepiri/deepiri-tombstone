@@ -83,12 +83,14 @@ else
 fi
 
 # CLI eval help / classic flag wiring
-if "$ROOT/deepiri-tombstone" eval --help 2>&1 | grep -q "classic"; then
+help_out=$("$ROOT/deepiri-tombstone" eval --help 2>&1 || true)
+if echo "$help_out" | grep -q "classic"; then
   pass "eval --help mentions classic"
 else
   fail "eval --help mentions classic"
 fi
-if "$ROOT/deepiri-tombstone" help 2>&1 | grep -q "keep-alive"; then
+cli_help=$("$ROOT/deepiri-tombstone" help 2>&1 || true)
+if echo "$cli_help" | grep -q "keep-alive"; then
   pass "help advertises fast parallel eval"
 else
   fail "help advertises fast parallel eval"

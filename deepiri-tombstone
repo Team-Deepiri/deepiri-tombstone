@@ -7,6 +7,9 @@ if [[ ! -x "$ROOT/bin/deepiri-tombstone-core" ]]; then
 fi
 cd "$ROOT"
 
+# Shared Python helpers (paths / ollama_client / ledger) resolve from bin/ or src/common/.
+export PYTHONPATH="$ROOT/bin:$ROOT/src/common${PYTHONPATH:+:$PYTHONPATH}"
+
 CMD="${1:-}"
 ARG1="${2:-}"
 ARG2="${3:-}"

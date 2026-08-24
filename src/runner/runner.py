@@ -3,6 +3,19 @@
 Parallel Evaluation Runner for deepiri-tombstone.
 Keep-alive HTTP, response cache, batched ledger/stats writes.
 """
+import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
 import json
 import os
 import sys
@@ -13,27 +26,18 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
-        break
-
 from ollama_client import OllamaClient, cache_stats  # noqa: E402
 from ledger import append_batch, append_stats_batch  # noqa: E402
 
 running = True
-
 
 def handle_signal(signum, frame):
     global running
     print("\nGraceful shutdown requested...", file=sys.stderr)
     running = False
 
-
 signal.signal(signal.SIGINT, handle_signal)
 signal.signal(signal.SIGTERM, handle_signal)
-
 
 def load_fixture(path):
     prompts = []
@@ -49,12 +53,10 @@ def load_fixture(path):
                 prompts.append((line, ""))
     return prompts
 
-
 def check_keyword(response, keyword):
     if not keyword:
         return True
     return keyword.lower() in response.lower()
-
 
 def evaluate_one(client, model, prompt, keyword, idx, use_cache):
     resp, elapsed_ms, err, from_cache = client.generate(model, prompt, use_cache=use_cache)
@@ -63,7 +65,6 @@ def evaluate_one(client, model, prompt, keyword, idx, use_cache):
     text = resp or ""
     passed = check_keyword(text, keyword)
     return (idx, prompt, text, elapsed_ms, passed, None, from_cache)
-
 
 def main():
     parser = argparse.ArgumentParser(description="Parallel evaluation runner")
@@ -198,7 +199,6 @@ def main():
             json.dump(output, f, indent=2)
         print(f"Results to {args.output}", file=sys.stderr)
     sys.exit(0 if output["pass_rate"] >= 50 else 1)
-
 
 if __name__ == "__main__":
     main()

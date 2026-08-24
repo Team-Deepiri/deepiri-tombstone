@@ -4,21 +4,25 @@ Multi-Model Benchmark Runner for deepiri-tombstone.
 Runs the same eval fixture across multiple models and compares results.
 Uses keep-alive HTTP + response cache from the shared Ollama client.
 """
-import json
-import sys
 import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
 import argparse
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
-        break
-
 from ollama_client import OllamaClient  # noqa: E402
-
 
 def load_fixture(path):
     prompts = []
@@ -34,12 +38,10 @@ def load_fixture(path):
                 prompts.append((line, ""))
     return prompts
 
-
 def check_keyword(response, keyword):
     if not keyword:
         return True
     return keyword.lower() in response.lower()
-
 
 def eval_prompt(client, model, prompt, keyword, use_cache):
     response, latency, error, cache_hit = client.generate(model, prompt, use_cache=use_cache)
@@ -61,7 +63,6 @@ def eval_prompt(client, model, prompt, keyword, use_cache):
         "error": None,
         "cache_hit": cache_hit,
     }
-
 
 def main():
     parser = argparse.ArgumentParser(description="Run multi-model benchmark")
@@ -149,7 +150,6 @@ def main():
 
     rates = [s["pass_rate"] for s in summary.values()]
     sys.exit(0 if rates and min(rates) >= 50 else 1)
-
 
 if __name__ == "__main__":
     main()

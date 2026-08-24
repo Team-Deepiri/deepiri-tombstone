@@ -12,6 +12,8 @@ Finished-product release of the Deepiri post-training eval harness.
 - `doctor` command — toolchain / bridge / Ollama / fixture readiness check.
 - Parallel default `eval` with response cache and batched ledger; `--classic`
   for the B core path.
+- Shared `src/common/paths.py` (`ensure_common_path`, `read_version`, `repo_root`)
+  used by all Python stages; CLI exports `PYTHONPATH`.
 - CI and Docker install `libcurl` for the keep-alive B bridge.
 
 ### Fixed

@@ -3,25 +3,29 @@
 Multi-Turn Chat Evaluation for deepiri-tombstone.
 Evaluate conversational agents over multiple turns.
 """
-import json
-import sys
 import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
 import argparse
 import re
 from datetime import datetime
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
-        break
 from ollama_client import OllamaClient  # noqa: E402
-
 
 def call_chat(client, model, messages):
     content, _, err = client.chat(model, messages)
     return content, err
-
 
 def evaluate_turn_coherence(client, conversation, model):
     turns_text = "\n".join([f"{m['role']}: {m['content'][:100]}" for m in conversation])
@@ -40,7 +44,6 @@ Respond ONLY JSON: {{"coherence": 0.0-1.0, "issues": ["..."]}}"""
         except json.JSONDecodeError:
             pass
     return {"coherence": 0.5, "issues": ["eval_error"]}
-
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-turn chat evaluation")
@@ -103,7 +106,6 @@ def main():
     print(json.dumps(result, indent=2))
     client.close()
     sys.exit(0 if coherence.get("coherence", 0) >= 0.5 else 1)
-
 
 if __name__ == "__main__":
     main()

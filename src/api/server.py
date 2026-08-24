@@ -3,25 +3,31 @@
 REST API Server for deepiri-tombstone.
 Zero-dependency HTTP API for running evaluations programmatically.
 """
-import json
-import sys
 import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
 import argparse
 import http.server
 import urllib.parse
 import time
 from datetime import datetime
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
-        break
 from ollama_client import OllamaClient  # noqa: E402
 
 HOST = os.environ.get("DEEPIRI_TOMBSTONE_HOST", "127.0.0.1:11434")
 MODEL = os.environ.get("DEEPIRI_TOMBSTONE_MODEL", "llama3.2")
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = repo_root(__file__)
 _CLIENT = OllamaClient(host=HOST)
 
 
@@ -64,7 +70,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
                 "ollama": ok,
                 "host": HOST,
                 "model": MODEL,
-                "version": _version(),
+                "version": read_version(__file__),
                 "timestamp": datetime.now().isoformat(),
             }, 200 if ok else 503)
         elif path == "/api/v1/models":
@@ -74,9 +80,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             else:
                 self._json_response(tags or {"models": []})
         elif path.startswith("/api/v1/stats"):
-            stats_path = os.path.join(ROOT, "..", "reports", "stats.dat")
-            if not os.path.exists(stats_path):
-                stats_path = os.path.join("reports", "stats.dat")
+            stats_path = os.path.join(ROOT, "reports", "stats.dat")
             if os.path.exists(stats_path):
                 with open(stats_path) as f:
                     lines = f.readlines()
@@ -121,9 +125,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             for m in models:
                 passes = 0
                 total = 0
-                fixture_path = fixture if os.path.isabs(fixture) else os.path.join(ROOT, "..", fixture)
-                if not os.path.exists(fixture_path):
-                    fixture_path = fixture
+                fixture_path = fixture if os.path.isabs(fixture) else os.path.join(ROOT, fixture)
                 if os.path.exists(fixture_path):
                     with open(fixture_path) as f:
                         for line in f:
@@ -153,13 +155,6 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-
-
-def _version():
-    for path in (os.path.join(_HERE, "..", "..", "VERSION"), "VERSION"):
-        if os.path.exists(path):
-            return open(path).read().strip()
-    return "unknown"
 
 
 def main():

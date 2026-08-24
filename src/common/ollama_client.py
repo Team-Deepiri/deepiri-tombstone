@@ -252,23 +252,3 @@ class OllamaClient:
 
     def close(self) -> None:
         self._reset()
-
-
-def _common_dirs():
-    here = os.path.dirname(os.path.abspath(__file__))
-    return (
-        here,
-        os.path.join(here, "..", "common"),
-        os.path.join(here, "..", "..", "src", "common"),
-    )
-
-
-def ensure_common_path():
-    """Insert src/common or bin/ onto sys.path for sibling imports."""
-    import sys
-    for cand in _common_dirs():
-        if os.path.exists(os.path.join(cand, "ollama_client.py")):
-            if cand not in sys.path:
-                sys.path.insert(0, cand)
-            return cand
-    return None

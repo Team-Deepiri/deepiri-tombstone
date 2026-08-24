@@ -3,18 +3,25 @@
 Production Replay Engine for deepiri-tombstone.
 Re-runs evaluations from audit ledger and compares results across runs.
 """
-import json, sys, os, argparse
+import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json, argparse
 from datetime import datetime
 
 # Installed beside this script in bin/, or under src/common/ when run in tree.
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ledger.py")):
-        sys.path.insert(0, _cand)
-        break
 from ledger import load_ledger as parse_ledger
 from ollama_client import OllamaClient  # noqa: E402
-
 
 def replay_entry(entry, model, host, client=None):
     """Re-run a single prompt/response evaluation"""

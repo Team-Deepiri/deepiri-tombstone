@@ -3,18 +3,23 @@
 Multi-Juror Consensus Panel for deepiri-tombstone.
 Deploys multiple judge models, collects scores, reaches consensus.
 """
-import json
-import sys
 import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
 import argparse
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
-        break
 
 from ollama_client import OllamaClient  # noqa: E402
 
@@ -24,7 +29,6 @@ JUROR_CRITERIA = {
     "accuracy": "How factually accurate?",
     "completeness": "How complete and thorough?",
 }
-
 
 def call_judge(client, juror_model, prompt, response, use_cache):
     judge_prompt = f"""You are juror '{juror_model}'. Score this response 1-5.
@@ -49,7 +53,6 @@ Criteria:
             return None
     return None
 
-
 def compute_consensus(scores_list):
     if not scores_list:
         return {}
@@ -73,7 +76,6 @@ def compute_consensus(scores_list):
         else "low"
     )
     return result
-
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-juror consensus panel")
@@ -108,7 +110,6 @@ def main():
     result = compute_consensus(scores_list)
     print(json.dumps(result, indent=2))
     sys.exit(0 if result.get("overall", 0) >= 3.0 else 1)
-
 
 if __name__ == "__main__":
     main()

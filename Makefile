@@ -308,11 +308,15 @@ bin/ledger.py: $(SRC_COMMON)/ledger.py
 	@mkdir -p bin
 	cp $(SRC_COMMON)/ledger.py bin/ledger.py
 
-bin/ollama_client.py: $(SRC_COMMON)/ollama_client.py
+bin/paths.py: $(SRC_COMMON)/paths.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/paths.py bin/paths.py
+
+bin/ollama_client.py: $(SRC_COMMON)/ollama_client.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_COMMON)/ollama_client.py bin/ollama_client.py
 
-bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py
+bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_REPORT)/dashboard.py bin/dashboard
 	chmod +x bin/dashboard
@@ -351,7 +355,7 @@ bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py bin/
 	fi
 	chmod +x bin/replay
 
-bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py
+bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py bin/paths.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_RUNNER)/runner.py bin/runner; \
@@ -413,7 +417,7 @@ bin/export: $(SRC_EXPORT)/export.py bin/ledger.py
 	cp $(SRC_EXPORT)/export.py bin/export
 	chmod +x bin/export
 
-bin/doctor: $(SRC_DOCTOR)/doctor.py bin/ollama_client.py
+bin/doctor: $(SRC_DOCTOR)/doctor.py bin/ollama_client.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_DOCTOR)/doctor.py bin/doctor
 	chmod +x bin/doctor
@@ -474,7 +478,7 @@ clean:
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
 	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export bin/doctor
-	rm -f bin/ledger.py bin/ollama_client.py
+	rm -f bin/ledger.py bin/ollama_client.py bin/paths.py
 
 dist: clean all
 

@@ -3,13 +3,21 @@
 Guardrails & Safety Evaluation for deepiri-tombstone.
 Jailbreak detection, content safety, toxicity scoring.
 """
-import json, sys, os, argparse, re
+import os
+import sys
 
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
         break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json, argparse, re
+
 from ollama_client import OllamaClient  # noqa: E402
 
 def call_ollama(model, prompt, host):

@@ -2,15 +2,23 @@
 """
 Export results in JSON, CSV, Markdown, or HTML formats.
 """
-import json, sys, os, argparse, csv, io
+import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json, argparse, csv, io
 from datetime import datetime
 
 # Installed beside this script in bin/, or under src/common/ when run in tree.
-_HERE = os.path.dirname(os.path.abspath(__file__))
-for _cand in (_HERE, os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ledger.py")):
-        sys.path.insert(0, _cand)
-        break
 from ledger import load_ledger, load_stats
 
 def export_json(entries, stats, output):

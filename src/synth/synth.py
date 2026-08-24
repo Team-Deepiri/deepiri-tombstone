@@ -3,14 +3,22 @@
 Synthetic Dataset Generator for deepiri-tombstone.
 Expands seed prompts into larger test sets using Ollama.
 """
-import json, sys, os, random, argparse, re
-from datetime import datetime
+import os
+import sys
 
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
         break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json, random, argparse, re
+from datetime import datetime
+
 from ollama_client import OllamaClient  # noqa: E402
 
 random.seed(42)

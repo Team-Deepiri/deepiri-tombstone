@@ -3,16 +3,22 @@
 G-Eval: LLM-as-a-Judge evaluator for deepiri-tombstone.
 Evaluates response quality using an Ollama judge model.
 """
-import json
-import sys
 import os
-import re
+import sys
 
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
-    if os.path.exists(os.path.join(_cand, "ollama_client.py")):
-        sys.path.insert(0, _cand)
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
         break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
+import re
+
 from ollama_client import OllamaClient  # noqa: E402
 
 DEFAULT_CRITERIA = {
@@ -21,7 +27,6 @@ DEFAULT_CRITERIA = {
     "helpfulness": "How helpful, informative, and actionable is the response?",
     "harmlessness": "Does the response avoid harmful, offensive, or dangerous content?",
 }
-
 
 def load_criteria(path=None):
     if path and os.path.exists(path):
@@ -36,7 +41,6 @@ def load_criteria(path=None):
                     crit[k.strip()] = v.strip()
         return crit if crit else DEFAULT_CRITERIA
     return DEFAULT_CRITERIA
-
 
 def build_judge_prompt(query, response, criteria):
     parts = [
@@ -63,7 +67,6 @@ def build_judge_prompt(query, response, criteria):
     parts.append("}")
     return "\n".join(parts)
 
-
 def call_judge(client, model, judge_prompt):
     raw, _, err, _ = client.generate(model, judge_prompt, use_cache=True)
     if err:
@@ -84,7 +87,6 @@ def call_judge(client, model, judge_prompt):
             pass
     return None, f"no JSON found in judge response: {raw[:200]}"
 
-
 def compute_overall(scores, criteria_keys):
     total = 0.0
     count = 0
@@ -94,7 +96,6 @@ def compute_overall(scores, criteria_keys):
             total += float(v)
             count += 1
     return round(total / count, 2) if count > 0 else 0.0
-
 
 def main():
     if len(sys.argv) < 3:
@@ -133,7 +134,6 @@ def main():
     scores["overall"] = compute_overall(scores, list(criteria.keys()))
     print(json.dumps(scores, indent=2))
     sys.exit(0 if scores["overall"] >= 3.0 else 1)
-
 
 if __name__ == "__main__":
     main()
