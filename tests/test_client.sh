@@ -108,6 +108,35 @@ if echo "$help_out" | grep -q -- "--no-cache"; then
 else
   fail "runner --no-cache documented"
 fi
+if echo "$help_out" | grep -q -- "--fail-fast"; then
+  pass "runner --fail-fast documented"
+else
+  fail "runner --fail-fast documented"
+fi
+if echo "$help_out" | grep -q -- "--no-early-stop"; then
+  pass "runner --no-early-stop documented"
+else
+  fail "runner --no-early-stop documented"
+fi
+
+# Cache-first: pre-seeded cache completes without network
+export DEEPIRI_TOMBSTONE_CACHE_DIR="$TMP/cache2"
+unset DEEPIRI_TOMBSTONE_NO_CACHE || true
+FIX="$TMP/tiny.txt"
+printf 'hello|hello\n' > "$FIX"
+python3 - "$ROOT" <<'PY' || { fail "seed cache"; exit 1; }
+import os, sys
+sys.path.insert(0, os.path.join(sys.argv[1], "src", "common"))
+import ollama_client as oc
+oc.cache_put("m", "hello", "hello world")
+print("ok")
+PY
+out=$(DEEPIRI_TOMBSTONE_HOST=127.0.0.1:9 python3 "$ROOT/src/runner/runner.py" "$FIX" -m m --no-warm --no-progress 2>/dev/null || true)
+if echo "$out" | grep -q '"cache_hits": 1' && echo "$out" | grep -q '"warm_ms": 0'; then
+  pass "cache-first suite skips GPU"
+else
+  fail "cache-first suite skips GPU"
+fi
 
 # CLI eval help / classic flag wiring
 help_out=$("$ROOT/deepiri-tombstone" eval --help 2>&1 || true)

@@ -32,6 +32,7 @@ case "$CMD" in
     jobs=""
     out=""
     no_cache=0
+    fail_fast=""
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --classic)
@@ -50,9 +51,13 @@ case "$CMD" in
           no_cache=1
           shift
           ;;
+        --fail-fast)
+          fail_fast="${2:?eval: --fail-fast requires N}"
+          shift 2
+          ;;
         -h|--help)
-          echo "Usage: deepiri-tombstone eval [--classic] [model] [fixture] [-j N] [-o file] [--no-cache]"
-          echo "  Default path: warm + keep-alive runner + shared cache + SLO JSON"
+          echo "Usage: deepiri-tombstone eval [--classic] [model] [fixture] [-j N] [-o file] [--no-cache] [--fail-fast N]"
+          echo "  Default: cache-first + warm + keep-alive + stream early-stop + SLO JSON"
           echo "  Jobs: -j N, or DEEPIRI_TOMBSTONE_JOBS, or adaptive 4–16"
           exit 0
           ;;
@@ -80,6 +85,9 @@ case "$CMD" in
       export DEEPIRI_TOMBSTONE_CMD=eval
       export DEEPIRI_TOMBSTONE_ARG1="$model"
       export DEEPIRI_TOMBSTONE_ARG2="$fixture"
+      if [[ -n "$fail_fast" ]]; then
+        export DEEPIRI_TOMBSTONE_FAIL_FAST="$fail_fast"
+      fi
       exec "$ROOT/bin/deepiri-tombstone-core"
     fi
     runner_args=("$fixture" -m "$model" --ledger)
@@ -91,6 +99,9 @@ case "$CMD" in
     fi
     if [[ "$no_cache" -eq 1 ]]; then
       runner_args+=(--no-cache)
+    fi
+    if [[ -n "$fail_fast" ]]; then
+      runner_args+=(--fail-fast "$fail_fast")
     fi
     exec "$ROOT/bin/runner" "${runner_args[@]}"
     ;;

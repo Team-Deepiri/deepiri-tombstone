@@ -46,7 +46,7 @@ See [src/README.md](src/README.md), [docs/MODULES.md](docs/MODULES.md), and
 | `warm [model]` | Preload model into VRAM (B core) |
 | `ask <model> <prompt>` | Single spot-check (B core) |
 | `summary` | Print classic-eval running stats |
-| `eval [model] [fixture] [-j N]` | Fast parallel eval (warm, keep-alive, cache, SLO JSON, batched ledger) |
+| `eval [model] [fixture] [-j N]` | Cache-first parallel eval (warm-on-miss, early-stop, SLO, ledger) |
 | `eval --classic [model] [fixture]` | B core: keep-alive + shared SHA-256 cache + batch ledger + warm + fail-fast |
 | `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
 | `mutate <fixture>` | Adversarial prompt mutation |
@@ -68,6 +68,8 @@ See [src/README.md](src/README.md), [docs/MODULES.md](docs/MODULES.md), and
 | `DEEPIRI_TOMBSTONE_JOBS` | adaptive 4–16 | Parallel workers for `eval` / `runner` / `bench` |
 | `DEEPIRI_TOMBSTONE_CACHE_DIR` | `reports/cache` | Shared SHA-256 response cache (B ↔ Python) |
 | `DEEPIRI_TOMBSTONE_NO_CACHE` | (unset) | Set to `1` to disable response cache |
+| `DEEPIRI_TOMBSTONE_KEEP_ALIVE` | `30m` | Ollama model pin between calls |
+| `DEEPIRI_TOMBSTONE_FAIL_FAST` | (unset) | Stop after N failures on hot or classic path |
 
 ## Advanced features
 

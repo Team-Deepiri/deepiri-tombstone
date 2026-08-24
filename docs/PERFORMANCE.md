@@ -44,18 +44,21 @@ where \(O\) is connection/parse/ledger overhead. The runner reports:
 
 | Lever | Effect |
 |-------|--------|
-| Keep-alive HTTP | Collapse per-prompt TCP/TLS tax into \(O\) |
+| **Cache-first** | Hits resolve before warm/GPU; full-cache suite wall ≈ disk I/O |
+| Keep-alive HTTP + `keep_alive` | Collapse TCP tax; pin model in VRAM |
 | Shared SHA-256 cache (B ↔ Python) | Same key → same file; classic and hot path share hits |
-| Warm before eval | Move cold-load out of the measured miss sum |
-| Adaptive \(P \in [4,16]\) | Saturate local Ollama without thrashing by default |
-| Batched ledger | One flush, not N fsync-ish appends |
+| **Stream early-stop** | Keyword evals abort mid-generation (first-run wall cut) |
+| Warm only on misses | Cold-load never paid when cache covers the suite |
+| Adaptive \(P \in [4,16]\) + fail-fast | Saturate Ollama; abort burning budget on broken runs |
+| Batched ledger | One flush, not N appends |
 
 ## Commands
 
 ```bash
-./deepiri-tombstone eval llama3.2 -j 8          # hot path + warm + SLO JSON
-./deepiri-tombstone eval --classic llama3.2     # B castle, same cache dir
-./deepiri-tombstone doctor                      # readiness + jobs/cache hints
+./deepiri-tombstone eval llama3.2 -j 8
+./deepiri-tombstone eval llama3.2 --fail-fast 3
+./deepiri-tombstone eval --classic llama3.2
+./deepiri-tombstone doctor
 ```
 
-Re-run the same fixture to see \(h \to 1\) and \(\mathrm{pps}\) spike — that is the intended production loop, not “make the model faster.”
+Re-run the same fixture: \(h \to 1\), warm skipped, \(\mathrm{pps}\) spikes — that is the intended production loop.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.2 — 2026-08-24
+
+Amazing-harness speed cut — the fastest eval is the one that barely calls the model.
+
+### Added
+- **Cache-first runner:** resolve all hits before warm/GPU; full-cache suites skip warm entirely.
+- **Stream early-stop:** keyword fixtures abort generation as soon as the needle appears (uncached).
+- **Fail-fast on hot path:** `--fail-fast N` / `DEEPIRI_TOMBSTONE_FAIL_FAST` cancels remaining work.
+- **Ollama `keep_alive`** (default `30m`, override `DEEPIRI_TOMBSTONE_KEEP_ALIVE`) pins the model.
+- Live progress shows prompts/sec and early-stop count.
+
 ## 2.1.1 — 2026-08-24
 
 Production speed pass — shared cache identity + measurable SLOs.

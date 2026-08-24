@@ -5,6 +5,11 @@ Shared Ollama HTTP client for deepiri-tombstone hot paths.
 Uses keep-alive http.client (no per-call curl fork) and an optional
 content-addressed response cache so re-runs / benches / juries skip
 identical (model, prompt) pairs.
+
+Speed levers:
+  - keep_alive pins the model in VRAM across calls
+  - stream + stop_when aborts generation once a keyword appears
+  - cache hits never touch the network
 """
 from __future__ import annotations
 
@@ -14,15 +19,20 @@ import json
 import os
 import threading
 import time
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 from urllib.parse import urlparse
 
 DEFAULT_HOST = "127.0.0.1:11434"
 DEFAULT_TIMEOUT = 120
+DEFAULT_KEEP_ALIVE = "30m"
 
 
 def default_host() -> str:
     return os.environ.get("DEEPIRI_TOMBSTONE_HOST", DEFAULT_HOST)
+
+
+def keep_alive_value() -> str:
+    return os.environ.get("DEEPIRI_TOMBSTONE_KEEP_ALIVE", DEFAULT_KEEP_ALIVE)
 
 
 def cache_dir() -> str:
@@ -31,8 +41,8 @@ def cache_dir() -> str:
         return root
     here = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(here, "..", "reports", "cache"),       # bin/ → ../reports
-        os.path.join(here, "..", "..", "reports", "cache"), # src/common → ../../reports
+        os.path.join(here, "..", "reports", "cache"),
+        os.path.join(here, "..", "..", "reports", "cache"),
         os.path.join("reports", "cache"),
     ]
     for cand in candidates:
@@ -121,11 +131,11 @@ class OllamaClient:
         self.hits = 0
         self.misses = 0
         self.errors = 0
+        self.early_stops = 0
 
     def _conn(self) -> http.client.HTTPConnection:
         conn = getattr(self._local, "conn", None)
         if conn is None:
-            # Accept host or host:port; strip accidental scheme.
             host = self.host
             if "://" in host:
                 parsed = urlparse(host if "://" in host else f"http://{host}")
@@ -174,6 +184,73 @@ class OllamaClient:
         except Exception:
             return False
 
+    def _generate_stream(
+        self,
+        model: str,
+        prompt: str,
+        stop_when: Callable[[str], bool],
+    ) -> Tuple[Optional[str], int, Optional[str], bool]:
+        """Stream tokens; abort as soon as stop_when(text) is true. Never caches."""
+        payload = json.dumps(
+            {
+                "model": model,
+                "prompt": prompt,
+                "stream": True,
+                "keep_alive": keep_alive_value(),
+            }
+        ).encode("utf-8")
+        start = time.monotonic()
+        text = ""
+        early = False
+        try:
+            headers = {
+                "Connection": "keep-alive",
+                "Content-Type": "application/json",
+                "Content-Length": str(len(payload)),
+            }
+            conn = self._conn()
+            conn.request("POST", "/api/generate", body=payload, headers=headers)
+            resp = conn.getresponse()
+            if resp.status != 200:
+                body = resp.read()
+                with self._lock:
+                    self.misses += 1
+                    self.errors += 1
+                elapsed_ms = int((time.monotonic() - start) * 1000)
+                return None, elapsed_ms, f"http {resp.status}", False
+            while True:
+                line = resp.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    chunk = json.loads(line.decode("utf-8") if isinstance(line, bytes) else line)
+                except json.JSONDecodeError:
+                    continue
+                text += chunk.get("response") or ""
+                if stop_when(text):
+                    early = True
+                    # Drop the rest of the stream; reset so keep-alive stays clean.
+                    self._reset()
+                    break
+                if chunk.get("done"):
+                    break
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            with self._lock:
+                self.misses += 1
+                if early:
+                    self.early_stops += 1
+            return text, elapsed_ms, None, False
+        except Exception as e:
+            self._reset()
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            with self._lock:
+                self.misses += 1
+                self.errors += 1
+            return None, elapsed_ms, str(e), False
+
     def generate(
         self,
         model: str,
@@ -181,8 +258,12 @@ class OllamaClient:
         *,
         use_cache: bool = True,
         stream: bool = False,
+        stop_when: Optional[Callable[[str], bool]] = None,
     ) -> Tuple[Optional[str], int, Optional[str], bool]:
-        """Return (response_text, latency_ms, error, cache_hit)."""
+        """Return (response_text, latency_ms, error, cache_hit).
+
+        If stop_when is set, streams and aborts early (result is not cached).
+        """
         if use_cache:
             cached = cache_get(model, prompt, "generate")
             if cached is not None:
@@ -190,8 +271,16 @@ class OllamaClient:
                     self.hits += 1
                 return cached, 0, None, True
 
+        if stop_when is not None:
+            return self._generate_stream(model, prompt, stop_when)
+
         payload = json.dumps(
-            {"model": model, "prompt": prompt, "stream": stream}
+            {
+                "model": model,
+                "prompt": prompt,
+                "stream": stream,
+                "keep_alive": keep_alive_value(),
+            }
         ).encode("utf-8")
         start = time.monotonic()
         try:
@@ -225,7 +314,12 @@ class OllamaClient:
     ) -> Tuple[Optional[str], int, Optional[str]]:
         """Chat API. Returns (content, latency_ms, error)."""
         payload = json.dumps(
-            {"model": model, "messages": messages, "stream": False}
+            {
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "keep_alive": keep_alive_value(),
+            }
         ).encode("utf-8")
         start = time.monotonic()
         try:
@@ -257,6 +351,7 @@ class OllamaClient:
                 "model": model,
                 "prompt": "hi",
                 "stream": False,
+                "keep_alive": keep_alive_value(),
                 "options": {"num_predict": 1},
             }
         ).encode("utf-8")
