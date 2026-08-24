@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Parallel Evaluation Runner for deepiri-tombstone.
-Keep-alive HTTP, response cache, batched ledger/stats writes.
+Keep-alive HTTP, response cache, warm-on-start, adaptive jobs, SLO report.
 """
 import os
 import sys
@@ -13,21 +13,19 @@ for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, ".
         if _cand not in sys.path:
             sys.path.insert(0, _cand)
         break
-from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+from paths import ensure_common_path, read_version  # noqa: E402
 ensure_common_path(__file__)
 
-import json
-import os
-import sys
 import argparse
+import json
 import signal
 import time
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 from ollama_client import OllamaClient, cache_stats  # noqa: E402
 from ledger import append_batch, append_stats_batch  # noqa: E402
+from slo import compute_slo, default_jobs  # noqa: E402
 
 running = True
 
@@ -70,18 +68,19 @@ def main():
     parser = argparse.ArgumentParser(description="Parallel evaluation runner")
     parser.add_argument("fixture", help="Fixture file")
     parser.add_argument("-m", "--model", default=os.environ.get("DEEPIRI_TOMBSTONE_MODEL", "llama3.2"))
-    parser.add_argument("-j", "--jobs", type=int,
-                        default=int(os.environ.get("DEEPIRI_TOMBSTONE_JOBS", "4")),
-                        help="Parallel jobs (default 4, or DEEPIRI_TOMBSTONE_JOBS)")
+    parser.add_argument("-j", "--jobs", type=int, default=None,
+                        help="Parallel jobs (default: adaptive 4–16, or DEEPIRI_TOMBSTONE_JOBS)")
     parser.add_argument("-o", "--output", help="Output JSON")
     parser.add_argument("--ledger", action="store_true",
                         help="Batch-append results to reports/audit.ledger and stats.dat")
     parser.add_argument("--ledger-path", default="reports/audit.ledger")
     parser.add_argument("--stats-path", default="reports/stats.dat")
     parser.add_argument("--no-cache", action="store_true", help="Disable response cache")
+    parser.add_argument("--no-warm", action="store_true", help="Skip model warm-up before eval")
     parser.add_argument("--no-progress", action="store_true", help="Disable progress")
     args = parser.parse_args()
 
+    jobs = default_jobs(args.jobs)
     if args.no_cache:
         os.environ["DEEPIRI_TOMBSTONE_NO_CACHE"] = "1"
 
@@ -95,17 +94,25 @@ def main():
         sys.exit(1)
 
     client = OllamaClient()
+    warm_ms = 0
+    if not args.no_warm:
+        ok, warm_ms, werr = client.warm(args.model)
+        if ok:
+            print(f"warm ok in {warm_ms}ms", file=sys.stderr)
+        else:
+            print(f"warm skipped/failed: {werr}", file=sys.stderr)
+
     total = len(prompts)
     completed = 0
     results = [None] * total
     passes = 0
     cache_hits = 0
-    start_time = time.time()
+    start_time = time.monotonic()
     run_id = f"run-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    print(f"Running {total} prompts with {args.jobs} workers (cache={'off' if args.no_cache else 'on'})...",
+    print(f"Running {total} prompts with {jobs} workers (cache={'off' if args.no_cache else 'on'})...",
           file=sys.stderr)
-    with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as ex:
+    with ThreadPoolExecutor(max_workers=max(1, jobs)) as ex:
         futures = {
             ex.submit(evaluate_one, client, args.model, p, k, i, not args.no_cache): i
             for i, (p, k) in enumerate(prompts)
@@ -141,7 +148,8 @@ def main():
             print("\nInterrupted, saving partial results...", file=sys.stderr)
 
     client.close()
-    elapsed = int(time.time() - start_time)
+    wall_seconds = time.monotonic() - start_time
+    elapsed = int(wall_seconds)
     if not args.no_progress:
         print(file=sys.stderr)
 
@@ -172,8 +180,17 @@ def main():
               f"{n_st} stats → {args.stats_path}", file=sys.stderr)
 
     cs = cache_stats()
+    latencies = [r["latency_ms"] for r in done]
+    slo = compute_slo(
+        completed=completed,
+        cache_hits=cache_hits,
+        wall_seconds=wall_seconds,
+        latencies_ms=latencies,
+        jobs=jobs,
+    )
     output = {
         "timestamp": datetime.now().isoformat(),
+        "version": read_version(__file__),
         "model": args.model,
         "fixture": args.fixture,
         "total": total,
@@ -182,13 +199,15 @@ def main():
         "failures": completed - passes,
         "pass_rate": round(passes / completed * 100, 1) if completed > 0 else 0,
         "elapsed_seconds": elapsed,
+        "warm_ms": warm_ms,
         "avg_latency_ms": round(
-            sum(r["latency_ms"] for r in done if r["latency_ms"]) / max(len(done), 1)
-        ),
-        "jobs": args.jobs,
+            sum(r["latency_ms"] for r in done if r["latency_ms"]) / max(len([r for r in done if r["latency_ms"]]), 1)
+        ) if any(r["latency_ms"] for r in done) else 0,
+        "jobs": jobs,
         "cache_hits": cache_hits,
         "cache_entries": cs.get("entries", 0),
-        "prompts_per_sec": round(completed / max(elapsed, 1), 2),
+        "prompts_per_sec": slo["prompts_per_sec"],
+        "slo": slo,
         "results": [r for r in results if r is not None],
     }
     report = {k: v for k, v in output.items() if k != "results"}

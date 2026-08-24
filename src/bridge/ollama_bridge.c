@@ -7,6 +7,7 @@
 #include "ollama_bridge.h"
 
 #include <curl/curl.h>
+#include <openssl/sha.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -371,21 +372,31 @@ static void cache_dir(char *out, size_t outlen) {
     snprintf(out, outlen, "reports/cache");
 }
 
-/* FNV-1a 64 → hex (fast, no OpenSSL dep). Not crypto; content addressing. */
+/* SHA-256 key must match src/common/ollama_client.py cache_key():
+ *   sha256(f"{endpoint}\\0{model}\\0{prompt}")
+ */
 static void hash_key(const char *model, const char *prompt, char *hex, size_t hexlen) {
-    unsigned long long h = 14695981039346656037ULL;
-    const char *parts[3] = {"generate", model, prompt};
-    for (int pi = 0; pi < 3; pi++) {
-        const unsigned char *p = (const unsigned char *)parts[pi];
-        for (; *p; p++) {
-            h ^= (unsigned long long)(*p);
-            h *= 1099511628211ULL;
-        }
-        h ^= 0;
-        h *= 1099511628211ULL;
+    unsigned char dig[SHA256_DIGEST_LENGTH];
+    SHA256_CTX ctx;
+    const char *endpoint = "generate";
+    const unsigned char nul = 0;
+    size_t i;
+
+    SHA256_Init(&ctx);
+    SHA256_Update(&ctx, endpoint, strlen(endpoint));
+    SHA256_Update(&ctx, &nul, 1);
+    SHA256_Update(&ctx, model, strlen(model));
+    SHA256_Update(&ctx, &nul, 1);
+    SHA256_Update(&ctx, prompt, strlen(prompt));
+    SHA256_Final(dig, &ctx);
+
+    if (hexlen < SHA256_DIGEST_LENGTH * 2 + 1) {
+        hex[0] = '\0';
+        return;
     }
-    snprintf(hex, hexlen, "%016llx%016llx",
-             (unsigned long long)(h >> 3), (unsigned long long)(h * 0x9e3779b97f4a7c15ULL));
+    for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        sprintf(hex + i * 2, "%02x", dig[i]);
+    hex[SHA256_DIGEST_LENGTH * 2] = '\0';
 }
 
 static int cache_get(const char *model, const char *prompt, char *out, size_t outlen) {

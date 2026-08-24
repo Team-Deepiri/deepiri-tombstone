@@ -29,7 +29,7 @@ case "$CMD" in
     classic=0
     model=""
     fixture=""
-    jobs="${DEEPIRI_TOMBSTONE_JOBS:-4}"
+    jobs=""
     out=""
     no_cache=0
     while [[ $# -gt 0 ]]; do
@@ -52,6 +52,8 @@ case "$CMD" in
           ;;
         -h|--help)
           echo "Usage: deepiri-tombstone eval [--classic] [model] [fixture] [-j N] [-o file] [--no-cache]"
+          echo "  Default path: warm + keep-alive runner + shared cache + SLO JSON"
+          echo "  Jobs: -j N, or DEEPIRI_TOMBSTONE_JOBS, or adaptive 4–16"
           exit 0
           ;;
         -*)
@@ -80,7 +82,10 @@ case "$CMD" in
       export DEEPIRI_TOMBSTONE_ARG2="$fixture"
       exec "$ROOT/bin/deepiri-tombstone-core"
     fi
-    runner_args=("$fixture" -m "$model" -j "$jobs" --ledger)
+    runner_args=("$fixture" -m "$model" --ledger)
+    if [[ -n "$jobs" ]]; then
+      runner_args+=(-j "$jobs")
+    fi
     if [[ -n "$out" ]]; then
       runner_args+=(-o "$out")
     fi

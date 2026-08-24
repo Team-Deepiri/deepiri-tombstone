@@ -182,7 +182,7 @@ components:
 	@echo "  export/        — Multi-format export (Python)"
 
 libdeepiri_tombstone.a: $(SRC_BRIDGE)/ollama_bridge.c $(SRC_BRIDGE)/ollama_bridge.h
-	$(CC) -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
+	$(CC) -Wno-deprecated-declarations -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
 	ar rcs libdeepiri_tombstone.a $(SRC_BRIDGE)/ollama_bridge.o
 
 combined.b: $(SRC_ORCH)/util.b $(SRC_ORCH)/cli.b $(SRC_ORCH)/main.b
@@ -208,7 +208,7 @@ deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/cl
 	@mkdir -p bin
 	@command -v $(BLANG) >/dev/null || { echo "install blang first: ./setup.sh"; exit 1; }
 	$(BLANG) combined.b --emit-llvm -o combined.ll
-	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -lcurl -o bin/deepiri-tombstone-core
+	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -lcurl -lcrypto -o bin/deepiri-tombstone-core
 
 # ./deepiri-tombstone is the checked-in dispatcher and is not generated.
 # scripts/run-b.sh only reaches the B core (ping/ask/eval); copying it over
@@ -316,6 +316,10 @@ bin/ollama_client.py: $(SRC_COMMON)/ollama_client.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_COMMON)/ollama_client.py bin/ollama_client.py
 
+bin/slo.py: $(SRC_COMMON)/slo.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/slo.py bin/slo.py
+
 bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_REPORT)/dashboard.py bin/dashboard
@@ -355,7 +359,7 @@ bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py bin/
 	fi
 	chmod +x bin/replay
 
-bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py bin/paths.py
+bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py bin/paths.py bin/slo.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_RUNNER)/runner.py bin/runner; \
@@ -417,7 +421,7 @@ bin/export: $(SRC_EXPORT)/export.py bin/ledger.py
 	cp $(SRC_EXPORT)/export.py bin/export
 	chmod +x bin/export
 
-bin/doctor: $(SRC_DOCTOR)/doctor.py bin/ollama_client.py bin/paths.py
+bin/doctor: $(SRC_DOCTOR)/doctor.py bin/ollama_client.py bin/paths.py bin/slo.py
 	@mkdir -p bin
 	cp $(SRC_DOCTOR)/doctor.py bin/doctor
 	chmod +x bin/doctor
@@ -478,7 +482,7 @@ clean:
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
 	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export bin/doctor
-	rm -f bin/ledger.py bin/ollama_client.py bin/paths.py
+	rm -f bin/ledger.py bin/ollama_client.py bin/paths.py bin/slo.py
 
 dist: clean all
 

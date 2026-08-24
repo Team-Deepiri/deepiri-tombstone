@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.1 — 2026-08-24
+
+Production speed pass — shared cache identity + measurable SLOs.
+
+### Added
+- Unified SHA-256 cache keys across B bridge and Python (classic ↔ hot path share hits).
+- Runner warm-on-start, adaptive jobs (`default_jobs` 4–16), `slo` block in eval JSON
+  (`η`, cache hit rate, prompts/sec, production gates).
+- `docs/PERFORMANCE.md` — harness speed model and invariants.
+- Doctor checks `libcrypto`, SLO module, and adaptive job hint.
+
+### Changed
+- Core links `-lcrypto` for SHA-256; CI/Docker/install-deps install `libssl-dev`.
+
 ## 2.1.0 — 2026-08-24
 
 Finished-product release of the Deepiri post-training eval harness.

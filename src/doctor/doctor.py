@@ -21,6 +21,7 @@ import shutil
 import subprocess
 
 from ollama_client import OllamaClient, cache_stats  # noqa: E402
+from slo import default_jobs  # noqa: E402
 
 
 def check(name, ok, detail=""):
@@ -55,6 +56,11 @@ def main():
         client_py = os.path.join(root, "src", "common", "ollama_client.py")
     run("shared Ollama client", os.path.isfile(client_py), client_py)
 
+    slo_py = os.path.join(root, "bin", "slo.py")
+    if not os.path.isfile(slo_py):
+        slo_py = os.path.join(root, "src", "common", "slo.py")
+    run("SLO module", os.path.isfile(slo_py), slo_py)
+
     for tool in ("curl", "python3", "gcc"):
         run(f"toolchain {tool}", shutil.which(tool) is not None, shutil.which(tool) or "missing")
 
@@ -62,8 +68,10 @@ def main():
         try:
             out = subprocess.check_output(["ldd", core], text=True, stderr=subprocess.DEVNULL)
             run("core links libcurl", "libcurl" in out, "keep-alive bridge")
+            run("core links libcrypto", "libcrypto" in out, "SHA-256 cache keys")
         except Exception:
             run("core links libcurl", False, "ldd failed")
+            run("core links libcrypto", False, "ldd failed")
 
     fixture = os.environ.get("DEEPIRI_TOMBSTONE_FIXTURE", "fixtures/eval_prompts.txt")
     fpath = fixture if os.path.isabs(fixture) else os.path.join(root, fixture)
@@ -90,6 +98,9 @@ def main():
     cs = cache_stats()
     run("response cache dir", True, f"{cs.get('dir')} ({cs.get('entries', 0)} entries)")
 
+    jobs = default_jobs()
+    run("adaptive jobs", jobs >= 1, f"default_jobs()={jobs} (override with DEEPIRI_TOMBSTONE_JOBS)")
+
     reports = os.path.join(root, "reports")
     if not os.path.isdir(reports):
         os.makedirs(reports, exist_ok=True)
@@ -102,8 +113,12 @@ def main():
         "total": total,
         "ready": passed == total,
         "host": host,
-        "jobs": os.environ.get("DEEPIRI_TOMBSTONE_JOBS", "4"),
+        "jobs": jobs,
+        "jobs_env": os.environ.get("DEEPIRI_TOMBSTONE_JOBS"),
         "cache_dir": cs.get("dir"),
+        "cache_entries": cs.get("entries", 0),
+        "slo_hint": "eval JSON includes slo.eta_overhead, slo.prompts_per_sec, slo.production_fast",
+        "perf_doc": "docs/PERFORMANCE.md",
     }, indent=2))
     sys.exit(0 if passed == total else 1)
 

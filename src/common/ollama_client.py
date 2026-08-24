@@ -250,5 +250,26 @@ class OllamaClient:
         except Exception as e:
             return None, str(e)
 
+    def warm(self, model: str) -> Tuple[bool, int, Optional[str]]:
+        """Load model weights into VRAM with a 1-token generate. Returns (ok, ms, err)."""
+        payload = json.dumps(
+            {
+                "model": model,
+                "prompt": "hi",
+                "stream": False,
+                "options": {"num_predict": 1},
+            }
+        ).encode("utf-8")
+        start = time.monotonic()
+        try:
+            status, _ = self.request("POST", "/api/generate", payload)
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            if status != 200:
+                return False, elapsed_ms, f"http {status}"
+            return True, elapsed_ms, None
+        except Exception as e:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            return False, elapsed_ms, str(e)
+
     def close(self) -> None:
         self._reset()

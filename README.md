@@ -34,7 +34,8 @@ Code lives under `src/` by **pipeline stage** (not by language):
 | Request builder | `src/request/` |
 | HTTP transport | `src/transport/` |
 
-See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
+See [src/README.md](src/README.md), [docs/MODULES.md](docs/MODULES.md), and
+[docs/PERFORMANCE.md](docs/PERFORMANCE.md) (η, cache hit rate, prompts/sec).
 
 ## Commands
 
@@ -45,8 +46,8 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 | `warm [model]` | Preload model into VRAM (B core) |
 | `ask <model> <prompt>` | Single spot-check (B core) |
 | `summary` | Print classic-eval running stats |
-| `eval [model] [fixture] [-j N]` | Fast parallel eval (keep-alive HTTP, cache, batched ledger) |
-| `eval --classic [model] [fixture]` | B core: keep-alive + cache + batch ledger + warm + fail-fast |
+| `eval [model] [fixture] [-j N]` | Fast parallel eval (warm, keep-alive, cache, SLO JSON, batched ledger) |
+| `eval --classic [model] [fixture]` | B core: keep-alive + shared SHA-256 cache + batch ledger + warm + fail-fast |
 | `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
 | `mutate <fixture>` | Adversarial prompt mutation |
 | `bench <fixture> <model>...` | Multi-model benchmark comparison |
@@ -64,8 +65,8 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 |----------|---------|---------|
 | `DEEPIRI_TOMBSTONE_MODEL` | `llama3.2` | Default model |
 | `DEEPIRI_TOMBSTONE_HOST` | `127.0.0.1:11434` | Ollama host |
-| `DEEPIRI_TOMBSTONE_JOBS` | `4` | Parallel workers for `eval` / `runner` / `bench` |
-| `DEEPIRI_TOMBSTONE_CACHE_DIR` | `reports/cache` | Response cache directory |
+| `DEEPIRI_TOMBSTONE_JOBS` | adaptive 4–16 | Parallel workers for `eval` / `runner` / `bench` |
+| `DEEPIRI_TOMBSTONE_CACHE_DIR` | `reports/cache` | Shared SHA-256 response cache (B ↔ Python) |
 | `DEEPIRI_TOMBSTONE_NO_CACHE` | (unset) | Set to `1` to disable response cache |
 
 ## Advanced features

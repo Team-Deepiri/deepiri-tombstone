@@ -33,7 +33,7 @@ int main(void) {
   return 0;
 }
 EOF
-if cc -o /tmp/dt_parse_test /tmp/dt_parse_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl 2>/dev/null \
+if cc -o /tmp/dt_parse_test /tmp/dt_parse_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl -lcrypto 2>/dev/null \
    && /tmp/dt_parse_test; then
   pass "parse_response_json extracts escaped response"
 else
@@ -49,7 +49,7 @@ int main(void) {
   return n == 3 ? 0 : 1;
 }
 EOF
-if cc -o /tmp/dt_tok_test /tmp/dt_tok_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl 2>/dev/null \
+if cc -o /tmp/dt_tok_test /tmp/dt_tok_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl -lcrypto 2>/dev/null \
    && /tmp/dt_tok_test; then
   pass "run_tokenize counts words in-process"
 else
@@ -81,7 +81,7 @@ int main(void) {
   return 0;
 }
 EOF
-if cc -o /tmp/dt_stats_test /tmp/dt_stats_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl 2>/dev/null \
+if cc -o /tmp/dt_stats_test /tmp/dt_stats_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl -lcrypto 2>/dev/null \
    && (cd "$ROOT" && /tmp/dt_stats_test); then
   pass "stats_record / ledger_queue / write_summary"
 else

@@ -29,6 +29,33 @@ print("ok")
 PY
 pass "cache put/get round-trip"
 
+# Cache key is sha256(endpoint\0model\0prompt) — must match B bridge
+python3 - "$ROOT" <<'PY' || { fail "cache key format"; exit 1; }
+import hashlib, os, sys
+sys.path.insert(0, os.path.join(sys.argv[1], "src", "common"))
+import ollama_client as oc
+raw = b"generate\0m\0hello"
+expect = hashlib.sha256(raw).hexdigest()
+assert oc.cache_key("m", "hello") == expect
+assert len(expect) == 64
+print("ok")
+PY
+pass "SHA-256 cache key format"
+
+# SLO math gates
+python3 - "$ROOT" <<'PY' || { fail "slo compute"; exit 1; }
+import os, sys
+sys.path.insert(0, os.path.join(sys.argv[1], "src", "common"))
+from slo import compute_slo, default_jobs
+s = compute_slo(completed=10, cache_hits=10, wall_seconds=0.05,
+                latencies_ms=[0]*10, jobs=8)
+assert s["cache_hit_rate"] == 1.0
+assert s["production_fast"] is True
+assert default_jobs(6) == 6
+print("ok")
+PY
+pass "SLO compute_slo / default_jobs"
+
 # NO_CACHE disables reads/writes
 export DEEPIRI_TOMBSTONE_NO_CACHE=1
 python3 - "$ROOT" <<'PY' || { fail "NO_CACHE"; exit 1; }
