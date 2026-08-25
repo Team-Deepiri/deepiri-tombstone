@@ -1,17 +1,25 @@
 name: CI - deepiri-tombstone
 
 on:
-  push:
-    branches: [main, dev]
   pull_request:
     branches: [main, dev]
-
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+  workflow_dispatch:
 permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
+    timeout-minutes: 20
     name: Build and verify
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +54,7 @@ jobs:
           bash -n scripts/report.sh || true
 
   lint:
+    timeout-minutes: 20
     name: Lint and validate
     runs-on: ubuntu-latest
     steps:
