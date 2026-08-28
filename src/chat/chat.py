@@ -89,8 +89,12 @@ def main():
         client.close()
         return
 
-    if not args.conversation_file or not os.path.exists(args.conversation_file):
-        print("Usage: chat <conversation.json> | chat --interactive", file=sys.stderr)
+    if not args.conversation_file:
+        parser.print_help()
+        sys.exit(1)
+
+    if not os.path.exists(args.conversation_file):
+        print(f"ERROR: file not found: {args.conversation_file}", file=sys.stderr)
         sys.exit(1)
 
     with open(args.conversation_file) as f:
