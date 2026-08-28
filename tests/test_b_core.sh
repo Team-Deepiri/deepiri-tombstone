@@ -56,6 +56,35 @@ else
   fail "run_tokenize counts words in-process"
 fi
 
+# URL scheme handling (no hardcoded scheme literal)
+cat > /tmp/dt_url_test.c <<'EOF'
+#include <stdio.h>
+#include <string.h>
+typedef long word_t;
+word_t build_url(word_t host, word_t path, word_t out, word_t outlen);
+static int check(const char *host, const char *path, const char *want) {
+  char out[512];
+  if (!build_url((word_t)host, (word_t)path, (word_t)out, 512)) return -1;
+  if (strcmp(out, want) != 0) {
+    fprintf(stderr, "got [%s] want [%s]\n", out, want);
+    return -2;
+  }
+  return 0;
+}
+int main(void) {
+  if (check("127.0.0.1:11434", "/api/tags", "127.0.0.1:11434/api/tags")) return 1;
+  if (check("http://host:11434", "/api/generate", "http://host:11434/api/generate")) return 2;
+  if (check("https://host:443", "/api/chat", "https://host:443/api/chat")) return 3;
+  return 0;
+}
+EOF
+if cc -o /tmp/dt_url_test /tmp/dt_url_test.c "$ROOT/src/bridge/ollama_bridge.o" -lcurl -lcrypto 2>/dev/null \
+   && /tmp/dt_url_test; then
+  pass "build_url passes default/ http:// / https:// hosts through"
+else
+  fail "build_url URL scheme handling"
+fi
+
 # Stats + ledger batch without network
 cat > /tmp/dt_stats_test.c <<'EOF'
 #include <stdio.h>

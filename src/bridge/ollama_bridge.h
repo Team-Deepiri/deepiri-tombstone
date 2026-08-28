@@ -11,6 +11,7 @@ word_t ollama_warm(word_t model);
 word_t ollama_retry_generate(word_t model, word_t prompt, word_t buf, word_t buflen);
 word_t ollama_models(word_t buf, word_t buflen);
 word_t parse_response_json(word_t raw, word_t out, word_t outlen);
+word_t build_url(word_t host, word_t path, word_t out, word_t outlen);
 
 word_t run_filter(word_t cmd, word_t input, word_t outpath);
 word_t time_ms(void);

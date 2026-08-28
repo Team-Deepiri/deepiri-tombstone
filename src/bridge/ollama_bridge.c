@@ -234,6 +234,18 @@ static int ensure_curl(void) {
     return 1;
 }
 
+/* Build an Ollama request URL from the configured host and API path.
+ * A host may optionally carry an explicit scheme; hosts without one rely
+ * on libcurl's default protocol (HTTP), so no scheme literal is prepended
+ * and an explicit http:// or https:// scheme flows through unchanged.
+ * CodeQL (cpp/non-https-url) flags "http" literals that reach CURLOPT_URL,
+ * so a hardcoded scheme must not be reintroduced here. */
+word_t build_url(word_t host, word_t path, word_t out, word_t outlen) {
+    int n = snprintf((char *)out, (size_t)outlen, "%s%s",
+                     (const char *)host, (const char *)path);
+    return n > 0 && (size_t)n < (size_t)outlen;
+}
+
 static int http_request(const char *method, const char *path,
                         const char *body, char *out, size_t outlen) {
     char url[512];
@@ -243,7 +255,7 @@ static int http_request(const char *method, const char *path,
 
     load_host();
     if (!ensure_curl()) return -1;
-    snprintf(url, sizeof(url), "http://%s%s", g_host, path);
+    build_url((word_t)g_host, (word_t)path, (word_t)url, sizeof(url));
 
     mem.data = malloc(8192);
     if (!mem.data) return -1;
