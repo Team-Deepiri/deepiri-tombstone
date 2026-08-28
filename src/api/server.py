@@ -3,23 +3,41 @@
 REST API Server for deepiri-tombstone.
 Zero-dependency HTTP API for running evaluations programmatically.
 """
-import json, sys, os, subprocess, argparse, http.server, urllib.parse, threading, time
+import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json
+import argparse
+import http.server
+import urllib.parse
+import time
 from datetime import datetime
+
+from ollama_client import OllamaClient  # noqa: E402
 
 HOST = os.environ.get("DEEPIRI_TOMBSTONE_HOST", "127.0.0.1:11434")
 MODEL = os.environ.get("DEEPIRI_TOMBSTONE_MODEL", "llama3.2")
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = repo_root(__file__)
+_CLIENT = OllamaClient(host=HOST)
+
 
 def call_ollama(prompt, model=None):
     m = model or MODEL
-    payload = json.dumps({"model": m, "prompt": prompt, "stream": False})
-    try:
-        r = subprocess.run(["curl", "-sf", "--max-time", "60", f"http://{HOST}/api/generate", "-d", payload],
-                          capture_output=True, text=True, timeout=70)
-        if r.returncode != 0: return None, f"curl error {r.returncode}"
-        resp = json.loads(r.stdout)
-        return resp.get("response", ""), None
-    except Exception as e: return None, str(e)
+    resp, _, err, _ = _CLIENT.generate(m, prompt, use_cache=True)
+    if err:
+        return None, err
+    return resp, None
+
 
 class APIHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -34,32 +52,47 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
 
     def _read_body(self):
         length = int(self.headers.get("Content-Length", 0))
-        if length == 0: return {}
+        if length == 0:
+            return {}
         body = self.rfile.read(length)
-        try: return json.loads(body)
-        except: return {"text": body.decode()}
+        try:
+            return json.loads(body)
+        except Exception:
+            return {"text": body.decode()}
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path.rstrip("/")
         if path == "/api/health":
-            self._json_response({"status": "ok", "host": HOST, "model": MODEL, "timestamp": datetime.now().isoformat()})
+            ok = _CLIENT.ping()
+            self._json_response({
+                "status": "ok" if ok else "degraded",
+                "ollama": ok,
+                "host": HOST,
+                "model": MODEL,
+                "version": read_version(__file__),
+                "timestamp": datetime.now().isoformat(),
+            }, 200 if ok else 503)
         elif path == "/api/v1/models":
-            r, err = call_ollama("List available models")
-            try:
-                result = subprocess.run(["curl", "-sf", f"http://{HOST}/api/tags"], capture_output=True, text=True, timeout=10)
-                models = json.loads(result.stdout) if result.returncode == 0 else {"models": []}
-                self._json_response(models)
-            except: self._json_response({"models": [{"name": MODEL}]})
+            tags, err = _CLIENT.tags()
+            if err:
+                self._json_response({"models": [{"name": MODEL}], "error": err})
+            else:
+                self._json_response(tags or {"models": []})
         elif path.startswith("/api/v1/stats"):
-            stats_path = os.path.join(ROOT, "..", "reports", "stats.dat")
+            stats_path = os.path.join(ROOT, "reports", "stats.dat")
             if os.path.exists(stats_path):
                 with open(stats_path) as f:
                     lines = f.readlines()
                 self._json_response({"entries": len(lines), "file": stats_path})
-            else: self._json_response({"entries": 0, "file": stats_path})
+            else:
+                self._json_response({"entries": 0, "file": stats_path})
         else:
-            self._json_response({"error": "not found", "paths": ["/api/health", "/api/v1/models", "/api/v1/stats", "/api/v1/evaluate"]}, 404)
+            self._json_response({
+                "error": "not found",
+                "paths": ["/api/health", "/api/v1/models", "/api/v1/stats",
+                          "/api/v1/evaluate", "/api/v1/benchmark"],
+            }, 404)
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -75,7 +108,10 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             response, error = call_ollama(prompt, model)
             elapsed_ms = int((time.time() - start) * 1000)
             if error:
-                self._json_response({"error": error, "prompt": prompt, "model": model, "latency_ms": elapsed_ms}, 500)
+                self._json_response({
+                    "error": error, "prompt": prompt, "model": model,
+                    "latency_ms": elapsed_ms,
+                }, 500)
             else:
                 self._json_response({
                     "prompt": prompt, "model": model, "response": response,
@@ -89,18 +125,27 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             for m in models:
                 passes = 0
                 total = 0
-                fixture_path = os.path.join(ROOT, "..", fixture) if not os.path.isabs(fixture) else fixture
+                fixture_path = fixture if os.path.isabs(fixture) else os.path.join(ROOT, fixture)
                 if os.path.exists(fixture_path):
                     with open(fixture_path) as f:
                         for line in f:
                             line = line.strip()
-                            if not line or line.startswith("#"): continue
+                            if not line or line.startswith("#"):
+                                continue
                             total += 1
                             p = line.split("|")[0] if "|" in line else line
                             resp, _ = call_ollama(p, m)
-                            if resp: passes += 1
-                results[m] = {"passes": passes, "total": total, "pass_rate": round(passes/total*100, 1) if total > 0 else 0}
-            self._json_response({"models": results, "fixture": fixture, "timestamp": datetime.now().isoformat()})
+                            if resp:
+                                passes += 1
+                results[m] = {
+                    "passes": passes,
+                    "total": total,
+                    "pass_rate": round(passes / total * 100, 1) if total > 0 else 0,
+                }
+            self._json_response({
+                "models": results, "fixture": fixture,
+                "timestamp": datetime.now().isoformat(),
+            })
         else:
             self._json_response({"error": "not found"}, 404)
 
@@ -110,6 +155,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+
 
 def main():
     parser = argparse.ArgumentParser(description="REST API server for deepiri-tombstone")
@@ -126,6 +172,7 @@ def main():
     except KeyboardInterrupt:
         print("\nShutting down...", file=sys.stderr)
         server.shutdown()
+
 
 if __name__ == "__main__":
     main()

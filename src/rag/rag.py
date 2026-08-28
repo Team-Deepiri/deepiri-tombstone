@@ -3,21 +3,34 @@
 RAG Evaluation Suite for deepiri-tombstone.
 Measures faithfulness, answer relevance, context recall, and context precision.
 """
-import json, sys, os, subprocess, re, argparse
+import os
+import sys
+
+# Locate shared helpers (bin/ after make, or src/common/ in-tree).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _cand in (_HERE, os.path.join(_HERE, "..", "common"), os.path.join(_HERE, "..", "..", "src", "common")):
+    if os.path.isfile(os.path.join(_cand, "paths.py")):
+        if _cand not in sys.path:
+            sys.path.insert(0, _cand)
+        break
+from paths import ensure_common_path, read_version, repo_root  # noqa: E402
+ensure_common_path(__file__)
+
+import json, re, argparse
+
+from ollama_client import OllamaClient  # noqa: E402
+
+_CLIENT = None
+
+def _client(host=None):
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = OllamaClient(host=host) if host else OllamaClient()
+    return _CLIENT
 
 def call_ollama(model, prompt, host):
-    payload = json.dumps({"model": model, "prompt": prompt, "stream": False})
-    try:
-        result = subprocess.run(
-            ["curl", "-sf", "--max-time", "60", f"http://{host}/api/generate", "-d", payload],
-            capture_output=True, text=True, timeout=70
-        )
-        if result.returncode != 0:
-            return None
-        resp = json.loads(result.stdout)
-        return resp.get("response", "")
-    except Exception:
-        return None
+    text, _, err, _ = _client(host).generate(model, prompt, use_cache=True)
+    return None if err else text
 
 def score_faithfulness(question, answer, context, model, host):
     """Check if answer is faithful to context (no hallucination)"""

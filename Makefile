@@ -9,9 +9,9 @@
         docker-build docker-run docker-shell man \
         stage.judge stage.mutate stage.bench stage.synth stage.dashboard stage.trace \
         stage.rag stage.jury stage.replay stage.runner stage.checkpoint stage.stats \
-        stage.guard stage.api stage.notify stage.registry stage.chat stage.cost stage.export \
+        stage.guard stage.api stage.notify stage.registry stage.chat stage.cost stage.export stage.doctor \
         judge mutate bench synth dashboard trace \
-        rag jury replay runner checkpoint stats guard api notify registry chat cost export
+        rag jury replay runner checkpoint stats guard api notify registry chat cost export doctor
 
 SRC_ORCH   := src/orchestrator
 SRC_BRIDGE := src/bridge
@@ -41,6 +41,7 @@ SRC_CHAT   := src/chat
 SRC_COST   := src/cost
 SRC_EXPORT := src/export
 SRC_COMMON := src/common
+SRC_DOCTOR := src/doctor
 
 BLANG ?= $(CURDIR)/vendor/blang
 CC ?= gcc
@@ -50,7 +51,7 @@ LIBB ?= $(CURDIR)/vendor/libb.a
 export LD_LIBRARY_PATH := $(LLVM_LIB):$(LD_LIBRARY_PATH)
 
 all: deepiri-tombstone judge mutate bench synth dashboard trace \
-     rag jury replay runner checkpoint stats guard api notify registry chat cost export
+     rag jury replay runner checkpoint stats guard api notify registry chat cost export doctor
 
 help:
 	@echo "deepiri-tombstone Makefile"
@@ -181,7 +182,7 @@ components:
 	@echo "  export/        — Multi-format export (Python)"
 
 libdeepiri_tombstone.a: $(SRC_BRIDGE)/ollama_bridge.c $(SRC_BRIDGE)/ollama_bridge.h
-	$(CC) -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
+	$(CC) -Wno-deprecated-declarations -c -o $(SRC_BRIDGE)/ollama_bridge.o $(SRC_BRIDGE)/ollama_bridge.c
 	ar rcs libdeepiri_tombstone.a $(SRC_BRIDGE)/ollama_bridge.o
 
 combined.b: $(SRC_ORCH)/util.b $(SRC_ORCH)/cli.b $(SRC_ORCH)/main.b
@@ -192,17 +193,22 @@ vendor/llvm/usr/bin/clang-18:
 	@exit 1
 
 B_BRIDGE_FUNCS := get_cmd get_arg1 get_arg2 format_run_id str_len str_copy getenv_str \
-	time_ms read_file write_file ollama_ping ollama_generate ollama_chat run_filter \
-	system_cmd fixture_open fixture_next fixture_close format_audit run_score run_score_args run_tokenize \
+	time_ms read_file write_file ollama_ping ollama_generate ollama_chat ollama_warm run_filter \
+	system_cmd fixture_open fixture_next fixture_close fixture_count format_audit \
+	run_score run_score_args run_tokenize \
 	resp_buf parsed_buf prompt_buf keyword_buf audit_buf runid_buf status_buf model_buf \
-	fixture_buf cmd_buf arg1_buf arg2_buf set_retry_count ollama_retry_generate ollama_models fixture_category
+	fixture_buf cmd_buf arg1_buf arg2_buf num_buf set_retry_count ollama_retry_generate \
+	ollama_models fixture_category parse_response_json itoa_buf \
+	stats_reset stats_record stats_total stats_pass stats_fail stats_cache_hits \
+	stats_mean_latency stats_pass_rate ledger_queue ledger_flush write_summary \
+	append_stats_line last_cache_hit
 B_DEFSYMS := $(foreach fn,$(B_BRIDGE_FUNCS),-Wl,--defsym=b.$(fn)=$(fn))
 
 deepiri-tombstone-core: combined.b libdeepiri_tombstone.a vendor/llvm/usr/bin/clang-18
 	@mkdir -p bin
 	@command -v $(BLANG) >/dev/null || { echo "install blang first: ./setup.sh"; exit 1; }
 	$(BLANG) combined.b --emit-llvm -o combined.ll
-	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -o bin/deepiri-tombstone-core
+	$(CLANG) combined.ll $(SRC_BRIDGE)/ollama_bridge.o $(LIBB) $(B_DEFSYMS) -lcurl -lcrypto -o bin/deepiri-tombstone-core
 
 # ./deepiri-tombstone is the checked-in dispatcher and is not generated.
 # scripts/run-b.sh only reaches the B core (ping/ask/eval); copying it over
@@ -260,7 +266,7 @@ bin/http_fallback: $(SRC_HTTP)/http_fallback.pl
 
 # --- Advanced evaluation stages ---
 
-bin/judge: $(SRC_JUDGE)/judge.py $(SRC_JUDGE)/fallback.sh
+bin/judge: $(SRC_JUDGE)/judge.py $(SRC_JUDGE)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_JUDGE)/judge.py bin/judge; \
@@ -278,7 +284,7 @@ bin/mutate: $(SRC_MUTATE)/mutate.py $(SRC_MUTATE)/fallback.sh
 	fi
 	chmod +x bin/mutate
 
-bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh
+bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_BENCH)/bench.py bin/bench; \
@@ -287,7 +293,7 @@ bin/bench: $(SRC_BENCH)/bench.py $(SRC_BENCH)/fallback.sh
 	fi
 	chmod +x bin/bench
 
-bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
+bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_SYNTH)/synth.py bin/synth; \
@@ -296,13 +302,25 @@ bin/synth: $(SRC_SYNTH)/synth.py $(SRC_SYNTH)/fallback.sh
 	fi
 	chmod +x bin/synth
 
-# Stages are installed as standalone copies, so the shared ledger parser
-# has to sit beside them in bin/ for the import to resolve.
+# Stages are installed as standalone copies, so shared helpers have to sit
+# beside them in bin/ for imports to resolve.
 bin/ledger.py: $(SRC_COMMON)/ledger.py
 	@mkdir -p bin
 	cp $(SRC_COMMON)/ledger.py bin/ledger.py
 
-bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py
+bin/paths.py: $(SRC_COMMON)/paths.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/paths.py bin/paths.py
+
+bin/ollama_client.py: $(SRC_COMMON)/ollama_client.py bin/paths.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/ollama_client.py bin/ollama_client.py
+
+bin/slo.py: $(SRC_COMMON)/slo.py
+	@mkdir -p bin
+	cp $(SRC_COMMON)/slo.py bin/slo.py
+
+bin/dashboard: $(SRC_REPORT)/dashboard.py bin/ledger.py bin/paths.py
 	@mkdir -p bin
 	cp $(SRC_REPORT)/dashboard.py bin/dashboard
 	chmod +x bin/dashboard
@@ -314,7 +332,7 @@ bin/trace: $(SRC_TRACE)/trace.py
 
 # --- Wave 2: Production evaluation stages ---
 
-bin/rag: $(SRC_RAG)/rag.py $(SRC_RAG)/fallback.sh
+bin/rag: $(SRC_RAG)/rag.py $(SRC_RAG)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_RAG)/rag.py bin/rag; \
@@ -323,7 +341,7 @@ bin/rag: $(SRC_RAG)/rag.py $(SRC_RAG)/fallback.sh
 	fi
 	chmod +x bin/rag
 
-bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
+bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_JURY)/jury.py bin/jury; \
@@ -332,7 +350,7 @@ bin/jury: $(SRC_JURY)/jury.py $(SRC_JURY)/fallback.sh
 	fi
 	chmod +x bin/jury
 
-bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py
+bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_REPLAY)/replay.py bin/replay; \
@@ -341,7 +359,7 @@ bin/replay: $(SRC_REPLAY)/replay.py $(SRC_REPLAY)/fallback.sh bin/ledger.py
 	fi
 	chmod +x bin/replay
 
-bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh
+bin/runner: $(SRC_RUNNER)/runner.py $(SRC_RUNNER)/fallback.sh bin/ledger.py bin/ollama_client.py bin/paths.py bin/slo.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_RUNNER)/runner.py bin/runner; \
@@ -364,7 +382,7 @@ bin/stats: $(SRC_STATS)/stats.py $(SRC_STATS)/fallback.sh
 	fi
 	chmod +x bin/stats
 
-bin/guard: $(SRC_GUARD)/guard.py $(SRC_GUARD)/fallback.sh
+bin/guard: $(SRC_GUARD)/guard.py $(SRC_GUARD)/fallback.sh bin/ollama_client.py
 	@mkdir -p bin
 	if command -v python3 >/dev/null 2>&1; then \
 	  cp $(SRC_GUARD)/guard.py bin/guard; \
@@ -373,7 +391,7 @@ bin/guard: $(SRC_GUARD)/guard.py $(SRC_GUARD)/fallback.sh
 	fi
 	chmod +x bin/guard
 
-bin/api: $(SRC_API)/server.py
+bin/api: $(SRC_API)/server.py bin/ollama_client.py
 	@mkdir -p bin
 	cp $(SRC_API)/server.py bin/api
 	chmod +x bin/api
@@ -388,7 +406,7 @@ bin/registry: $(SRC_MODELS)/registry.py
 	cp $(SRC_MODELS)/registry.py bin/registry
 	chmod +x bin/registry
 
-bin/chat: $(SRC_CHAT)/chat.py
+bin/chat: $(SRC_CHAT)/chat.py bin/ollama_client.py
 	@mkdir -p bin
 	cp $(SRC_CHAT)/chat.py bin/chat
 	chmod +x bin/chat
@@ -402,6 +420,11 @@ bin/export: $(SRC_EXPORT)/export.py bin/ledger.py
 	@mkdir -p bin
 	cp $(SRC_EXPORT)/export.py bin/export
 	chmod +x bin/export
+
+bin/doctor: $(SRC_DOCTOR)/doctor.py bin/ollama_client.py bin/paths.py bin/slo.py
+	@mkdir -p bin
+	cp $(SRC_DOCTOR)/doctor.py bin/doctor
+	chmod +x bin/doctor
 
 # --- Stage aliases ---
 
@@ -450,6 +473,7 @@ registry: bin/registry
 chat: bin/chat
 cost: bin/cost
 export: bin/export
+doctor: bin/doctor
 
 clean:
 	rm -f combined.b combined.ll $(SRC_BRIDGE)/ollama_bridge.o libdeepiri_tombstone.a
@@ -457,8 +481,8 @@ clean:
 	rm -f bin/tokenize bin/score bin/audit bin/parse bin/build_request bin/http_fallback
 	rm -f bin/judge bin/mutate bin/bench bin/synth bin/dashboard bin/trace
 	rm -f bin/rag bin/jury bin/replay bin/runner bin/checkpoint bin/stats
-	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export
-	rm -f bin/ledger.py
+	rm -f bin/guard bin/api bin/notify bin/registry bin/chat bin/cost bin/export bin/doctor
+	rm -f bin/ledger.py bin/ollama_client.py bin/paths.py bin/slo.py
 
 dist: clean all
 

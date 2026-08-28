@@ -28,7 +28,7 @@ case "$OS" in
     if have apt-get; then
       info "installing system packages (apt)"
       sudo apt-get update -qq
-      sudo apt-get install -y -qq curl jq gcc gforth gnucobol gfortran python3 make binutils xz-utils 2>&1 | tail -5
+      sudo apt-get install -y -qq curl jq gcc gforth gnucobol gfortran python3 make binutils xz-utils libcurl4-openssl-dev libssl-dev 2>&1 | tail -5
     elif have dnf; then
       info "installing system packages (dnf)"
       sudo dnf install -y curl jq gcc gforth gnucobol gcc-gfortran python3 make binutils xz 2>&1 | tail -5

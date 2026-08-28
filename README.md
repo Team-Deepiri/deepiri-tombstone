@@ -8,12 +8,16 @@
 
 ```bash
 ./setup.sh
+./deepiri-tombstone doctor
 ./deepiri-tombstone ping
-./deepiri-tombstone ask llama3.2 "Say hello in one word"
-./deepiri-tombstone eval llama3.2
+./deepiri-tombstone eval llama3.2 -j 8
+./deepiri-tombstone eval --classic llama3.2   # B keep-alive castle
+./deepiri-tombstone dashboard
 ```
 
-`./setup.sh` installs build deps, compiles the project, starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a ping smoke test.
+`./setup.sh` installs build deps (including libcurl), compiles the project,
+starts **Ollama in Docker**, pulls the default model (`llama3.2`), and runs a
+ping smoke test. `doctor` confirms the install is evaluation-ready.
 
 ## Source layout
 
@@ -30,15 +34,20 @@ Code lives under `src/` by **pipeline stage** (not by language):
 | Request builder | `src/request/` |
 | HTTP transport | `src/transport/` |
 
-See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
+See [src/README.md](src/README.md), [docs/MODULES.md](docs/MODULES.md), and
+[docs/PERFORMANCE.md](docs/PERFORMANCE.md) (η, cache hit rate, prompts/sec).
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` |
-| `ask <model> <prompt>` | Single spot-check |
-| `eval [model] [fixture]` | Run fixture suite |
+| `ping` | Check Ollama at `DEEPIRI_TOMBSTONE_HOST` (B keep-alive bridge) |
+| `models` | List Ollama models (B core) |
+| `warm [model]` | Preload model into VRAM (B core) |
+| `ask <model> <prompt>` | Single spot-check (B core) |
+| `summary` | Print classic-eval running stats |
+| `eval [model] [fixture] [-j N]` | Cache-first parallel eval (warm-on-miss, early-stop, SLO, ledger) |
+| `eval --classic [model] [fixture]` | B core: keep-alive + shared SHA-256 cache + batch ledger + warm + fail-fast |
 | `judge <model> <prompt> [response] [criteria]` | G-Eval LLM-as-a-Judge scoring |
 | `mutate <fixture>` | Adversarial prompt mutation |
 | `bench <fixture> <model>...` | Multi-model benchmark comparison |
@@ -46,6 +55,7 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 | `dashboard` | Generate HTML evaluation report |
 | `trace [start\|view] [file]` | Span tracing & observability |
 | `rag <metric> <question> <answer> [context]` | RAG metrics — pass the retrieved context as the 4th argument |
+| `doctor` | Verify toolchain, B bridge, Ollama, fixtures |
 | `version` | Print the harness version |
 | `help` | Show full usage |
 
@@ -55,6 +65,11 @@ See [src/README.md](src/README.md) and [docs/MODULES.md](docs/MODULES.md).
 |----------|---------|---------|
 | `DEEPIRI_TOMBSTONE_MODEL` | `llama3.2` | Default model |
 | `DEEPIRI_TOMBSTONE_HOST` | `127.0.0.1:11434` | Ollama host |
+| `DEEPIRI_TOMBSTONE_JOBS` | adaptive 4–16 | Parallel workers for `eval` / `runner` / `bench` |
+| `DEEPIRI_TOMBSTONE_CACHE_DIR` | `reports/cache` | Shared SHA-256 response cache (B ↔ Python) |
+| `DEEPIRI_TOMBSTONE_NO_CACHE` | (unset) | Set to `1` to disable response cache |
+| `DEEPIRI_TOMBSTONE_KEEP_ALIVE` | `30m` | Ollama model pin between calls |
+| `DEEPIRI_TOMBSTONE_FAIL_FAST` | (unset) | Stop after N failures on hot or classic path |
 
 ## Advanced features
 

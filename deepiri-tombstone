@@ -7,17 +7,103 @@ if [[ ! -x "$ROOT/bin/deepiri-tombstone-core" ]]; then
 fi
 cd "$ROOT"
 
+# Shared Python helpers (paths / ollama_client / ledger) resolve from bin/ or src/common/.
+export PYTHONPATH="$ROOT/bin:$ROOT/src/common${PYTHONPATH:+:$PYTHONPATH}"
+
 CMD="${1:-}"
 ARG1="${2:-}"
 ARG2="${3:-}"
 ARG3="${4:-}"
 
 case "$CMD" in
-  ping|ask|eval)
+  ping|ask|models|warm|summary)
     export DEEPIRI_TOMBSTONE_CMD="$CMD"
     export DEEPIRI_TOMBSTONE_ARG1="$ARG1"
     export DEEPIRI_TOMBSTONE_ARG2="$ARG2"
     exec "$ROOT/bin/deepiri-tombstone-core"
+    ;;
+  eval)
+    # Fast path: parallel keep-alive runner + cache + batched ledger.
+    # Museum / classic B→Forth→AWK→Fortran→COBOL path: --classic
+    shift
+    classic=0
+    model=""
+    fixture=""
+    jobs=""
+    out=""
+    no_cache=0
+    fail_fast=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --classic)
+          classic=1
+          shift
+          ;;
+        -j|--jobs)
+          jobs="${2:?eval: -j requires a value}"
+          shift 2
+          ;;
+        -o|--output)
+          out="${2:?eval: -o requires a path}"
+          shift 2
+          ;;
+        --no-cache)
+          no_cache=1
+          shift
+          ;;
+        --fail-fast)
+          fail_fast="${2:?eval: --fail-fast requires N}"
+          shift 2
+          ;;
+        -h|--help)
+          echo "Usage: deepiri-tombstone eval [--classic] [model] [fixture] [-j N] [-o file] [--no-cache] [--fail-fast N]"
+          echo "  Default: cache-first + warm + keep-alive + stream early-stop + SLO JSON"
+          echo "  Jobs: -j N, or DEEPIRI_TOMBSTONE_JOBS, or adaptive 4–16"
+          exit 0
+          ;;
+        -*)
+          echo "Unknown eval flag: $1" >&2
+          echo "Try: deepiri-tombstone eval --help" >&2
+          exit 1
+          ;;
+        *)
+          if [[ -z "$model" ]]; then
+            model="$1"
+          elif [[ -z "$fixture" ]]; then
+            fixture="$1"
+          else
+            echo "Unexpected argument: $1" >&2
+            exit 1
+          fi
+          shift
+          ;;
+      esac
+    done
+    model="${model:-${DEEPIRI_TOMBSTONE_MODEL:-llama3.2}}"
+    fixture="${fixture:-fixtures/eval_prompts.txt}"
+    if [[ "$classic" -eq 1 ]]; then
+      export DEEPIRI_TOMBSTONE_CMD=eval
+      export DEEPIRI_TOMBSTONE_ARG1="$model"
+      export DEEPIRI_TOMBSTONE_ARG2="$fixture"
+      if [[ -n "$fail_fast" ]]; then
+        export DEEPIRI_TOMBSTONE_FAIL_FAST="$fail_fast"
+      fi
+      exec "$ROOT/bin/deepiri-tombstone-core"
+    fi
+    runner_args=("$fixture" -m "$model" --ledger)
+    if [[ -n "$jobs" ]]; then
+      runner_args+=(-j "$jobs")
+    fi
+    if [[ -n "$out" ]]; then
+      runner_args+=(-o "$out")
+    fi
+    if [[ "$no_cache" -eq 1 ]]; then
+      runner_args+=(--no-cache)
+    fi
+    if [[ -n "$fail_fast" ]]; then
+      runner_args+=(--fail-fast "$fail_fast")
+    fi
+    exec "$ROOT/bin/runner" "${runner_args[@]}"
     ;;
   judge)
     exec "$ROOT/bin/judge" "$ARG1" "$ARG2" "$ARG3" "${5:-}"
@@ -94,19 +180,28 @@ case "$CMD" in
     fi
     exit 0
     ;;
+  doctor)
+    exec "$ROOT/bin/doctor"
+    ;;
   help|--help|-h)
     echo "deepiri-tombstone — Deepiri post-training eval harness"
     echo ""
     echo "Core commands:"
-    echo "  ping                      — check Ollama connectivity"
-    echo "  ask <model> <prompt>      — single prompt evaluation"
-    echo "  eval [model] [fixture]    — batch evaluation from fixture"
+    echo "  ping                      — check Ollama connectivity (B keep-alive bridge)"
+    echo "  models                    — list Ollama models (B core)"
+    echo "  warm [model]              — preload model into VRAM (B core)"
+    echo "  ask <model> <prompt>      — single prompt evaluation (B core)"
+    echo "  summary                   — print classic-eval running stats"
+    echo "  eval [model] [fixture] [-j N] [-o file] [--no-cache]"
+    echo "                            — fast parallel eval (keep-alive + cache + ledger)"
+    echo "  eval --classic [model] [fixture]"
+    echo "                            — B core: keep-alive+cache+batch ledger+warm+fail-fast"
     echo ""
     echo "Advanced evaluation commands:"
     echo "  judge <model> <prompt> [response] [criteria]"
     echo "                            — G-Eval LLM-as-a-Judge scoring"
     echo "  mutate <fixture>          — adversarial prompt mutation"
-    echo "  bench <fixture> <model>... — multi-model benchmark"
+    echo "  bench <fixture> <model>... [-j N] — multi-model benchmark (parallel)"
     echo "  synth <seed> [count]      — synthetic dataset generation"
     echo "  dashboard                 — generate HTML report"
     echo "  trace [start|view] [file] — span tracing"
@@ -116,7 +211,7 @@ case "$CMD" in
     echo "  jury <prompt> <response> [jurors...]"
     echo "                            — multi-juror consensus panel"
     echo "  replay [ledger] [model]   — replay evaluations from ledger"
-    echo "  runner <fixture>          — parallel eval runner"
+    echo "  runner <fixture> [-j N]   — parallel eval runner (also used by eval)"
     echo "  checkpoint <action>       — eval checkpoint/resume"
     echo "  stats [file]              — statistical analysis"
     echo "  guard <check> <text>      — safety & jailbreak detection"
@@ -128,6 +223,7 @@ case "$CMD" in
     echo "  export <format> [output]   — export results (json/csv/md/html)"
     echo ""
     echo "Other commands:"
+    echo "  doctor                    — verify toolchain, bridge, Ollama, fixtures"
     echo "  version                   — print the harness version"
     echo "  help                      — show this message"
     exit 0

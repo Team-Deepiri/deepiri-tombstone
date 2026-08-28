@@ -31,7 +31,7 @@ jobs:
       - name: Autobuild
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc binutils make curl xz-utils
+          sudo apt-get install -y -qq gcc binutils make curl xz-utils libcurl4-openssl-dev libssl-dev
           bash scripts/bootstrap-toolchain.sh
           make libdeepiri_tombstone.a
 

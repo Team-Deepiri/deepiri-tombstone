@@ -26,7 +26,16 @@ test_cli "-V is accepted" "deepiri-tombstone" "$CLI" -V
 
 test_cli "help lists core commands" "ask <model> <prompt>" "$CLI" help
 test_cli "help lists the version command" "print the harness version" "$CLI" help
+test_cli "help advertises fast parallel eval" "keep-alive" "$CLI" help
 test_cli "unknown command is rejected" "Unknown command" "$CLI" definitely-not-a-command
+
+# eval defaults to the parallel runner; --classic keeps the B core.
+if grep -q 'exec "\$ROOT/bin/runner"' "$CLI" && grep -q -- '--classic' "$CLI"; then
+  echo "  PASS: eval defaults to runner with --classic escape hatch"
+else
+  echo "  FAIL: eval should default to runner and support --classic"
+  errors=$((errors + 1))
+fi
 
 # The rag dispatch must forward the context as its own argument rather than
 # repeating the answer, otherwise faithfulness compares the answer to itself.
@@ -48,7 +57,7 @@ fi
 # Every command advertised by help should have a dispatch arm.
 for cmd in ping ask eval judge mutate bench synth dashboard trace rag jury \
            replay runner checkpoint stats guard api notify registry chat \
-           cost export version help; do
+           cost export version help models warm summary doctor; do
   if grep -qE "^  ([a-z|_-]*\|)?${cmd}[|)]" "$CLI"; then
     echo "  PASS: dispatch arm exists for '$cmd'"
   else
@@ -56,6 +65,8 @@ for cmd in ping ask eval judge mutate bench synth dashboard trace rag jury \
     errors=$((errors + 1))
   fi
 done
+
+test_cli "help lists doctor" "doctor" "$CLI" help
 
 echo ""
 if [[ "$errors" -eq 0 ]]; then echo "ALL CLI TESTS PASSED"
