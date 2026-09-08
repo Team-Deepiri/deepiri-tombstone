@@ -1,13 +1,21 @@
 name: Lint
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   shellcheck:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -18,6 +26,7 @@ jobs:
           shellcheck scripts/*.sh tests/*.sh || true
 
   perl:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -25,6 +34,7 @@ jobs:
         run: perl -c src/transport/http_fallback.pl
 
   awk:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -32,6 +42,7 @@ jobs:
         run: awk --lint -f src/parse/response.awk /dev/null || true
 
   fixtures:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -43,6 +54,7 @@ jobs:
           done
 
   fortran:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,6 +65,7 @@ jobs:
           gfortran -fsyntax-only src/score/score.f || true
 
   cobol:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -63,6 +76,7 @@ jobs:
           cobc -fsyntax-only src/audit/ledger.cob 2>/dev/null || true
 
   forth:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -73,6 +87,7 @@ jobs:
           gforth -e "include src/tokenize/tokenize.fs" -e "bye" /dev/null 2>/dev/null || true
 
   configuration:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -82,6 +97,7 @@ jobs:
         run: bash scripts/validate-requirements.sh
 
   python:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
