@@ -2,12 +2,22 @@ name: Test
 
 on:
   push:
-    branches: ['*']
+    branches: [main, dev]
   pull_request:
     branches: ['*']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,6 +33,7 @@ jobs:
         run: bash tests/test_${{ matrix.component }}.sh
 
   fixture-validation:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +45,7 @@ jobs:
           done
 
   report-generation:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -47,6 +59,7 @@ jobs:
           bash scripts/report.sh html reports/audit.ledger > /dev/null 2>&1 && echo "html: OK" || echo "html: FAIL"
 
   export-formats:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
