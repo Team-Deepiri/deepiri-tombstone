@@ -24,7 +24,7 @@ jobs:
       matrix:
         component: [awk, tokenize, score, audit, build_request, http_fallback, judge, mutate, bench, synth, dashboard, trace]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install deps
         run: |
           sudo apt-get update -qq
@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Validate all fixture files
         run: |
           for f in fixtures/*.txt; do
@@ -48,7 +48,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Test report generation
         run: |
           mkdir -p reports
@@ -62,7 +62,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Test export formats
         run: |
           mkdir -p reports
