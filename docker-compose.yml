@@ -1,6 +1,6 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:latest@sha256:2b8eecdb85aa6ea67c381c8ecffec04b2658496cf2821a8f88b0485bdff198e8
     container_name: deepiri-ollama
     ports:
       - "${DEEPIRI_OLLAMA_PORT:-11434}:11434"
