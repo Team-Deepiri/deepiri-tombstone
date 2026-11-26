@@ -1,6 +1,7 @@
-ARG BASE=ubuntu:24.04
+# Literal FROM so Dependabot's docker ecosystem can see and refresh the digest.
+FROM ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac AS base
 
-FROM $BASE AS build
+FROM base AS build
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /src
 
@@ -27,7 +28,7 @@ RUN ARCH=$(uname -m); case "$ARCH" in \
 
 RUN make -j"$(nproc)" all
 
-FROM $BASE AS runtime
+FROM base AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
