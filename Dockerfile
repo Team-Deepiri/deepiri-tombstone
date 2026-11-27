@@ -1,5 +1,5 @@
 # Literal FROM so Dependabot's docker ecosystem can see and refresh the digest.
-FROM ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac AS base
+FROM ubuntu:24.04@sha256:562111b88caa79c71391c0c4d3c2114a7d5c35915c20561fd893cb1e07929e6b AS base
 
 FROM base AS build
 ENV DEBIAN_FRONTEND=noninteractive
